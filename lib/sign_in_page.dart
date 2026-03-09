@@ -14,13 +14,11 @@ class SignInPage extends StatefulWidget {
 class _SignInPageState extends State<SignInPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  String _selectedUserType = 'client'; // Default to client
+  String _selectedUserType = 'client';
 
   void _handleSignIn() {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
-
-    // Use database to check credentials
     final user = UsersDatabase.signIn(
       email: email,
       password: password,
@@ -28,7 +26,6 @@ class _SignInPageState extends State<SignInPage> {
     );
 
     if (user != null) {
-      // Success - navigate based on user type
       if (user.userType == 'client') {
         Navigator.pushReplacement(
           context,
@@ -45,7 +42,6 @@ class _SignInPageState extends State<SignInPage> {
         );
       }
     } else {
-      // Failed - show error
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Invalid credentials for $_selectedUserType'),
@@ -89,7 +85,6 @@ class _SignInPageState extends State<SignInPage> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Logo
                     Container(
                       width: 80,
                       height: 80,
@@ -103,8 +98,6 @@ class _SignInPageState extends State<SignInPage> {
                       ),
                     ),
                     const SizedBox(height: 24),
-
-                    // Welcome text
                     const Text(
                       'Welcome to FixIt!',
                       style: TextStyle(
@@ -114,8 +107,6 @@ class _SignInPageState extends State<SignInPage> {
                       ),
                     ),
                     const SizedBox(height: 24),
-
-                    // User type selection
                     const Text(
                       'Sign in as:',
                       style: TextStyle(
@@ -194,8 +185,6 @@ class _SignInPageState extends State<SignInPage> {
                       ],
                     ),
                     const SizedBox(height: 32),
-
-                    // Email field
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -216,8 +205,6 @@ class _SignInPageState extends State<SignInPage> {
                       ],
                     ),
                     const SizedBox(height: 20),
-
-                    // Password field
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -239,8 +226,6 @@ class _SignInPageState extends State<SignInPage> {
                       ],
                     ),
                     const SizedBox(height: 12),
-
-                    // Don't have an account link
                     Align(
                       alignment: Alignment.centerRight,
                       child: TextButton(
@@ -262,8 +247,6 @@ class _SignInPageState extends State<SignInPage> {
                       ),
                     ),
                     const SizedBox(height: 12),
-
-                    // Sign In button
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
@@ -278,8 +261,6 @@ class _SignInPageState extends State<SignInPage> {
                       ),
                     ),
                     const SizedBox(height: 24),
-
-                    // Sign up as worker link
                     TextButton(
                       onPressed: () {},
                       child: const Text(
