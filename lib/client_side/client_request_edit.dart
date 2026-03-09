@@ -9,8 +9,7 @@ import '../requests_data/requests_database.dart';
 class ClientRequestEditPage extends StatefulWidget {
   final String? serviceType;
   final User user;
-  final Request? existingRequest; // null = create new, non-null = edit
-
+  final Request? existingRequest; 
   const ClientRequestEditPage({
     Key? key,
     this.serviceType,
@@ -49,14 +48,12 @@ class _ClientRequestEditPageState extends State<ClientRequestEditPage> {
     super.initState();
 
     if (_isEditing) {
-      // Pre-fill with existing request data
       final r = widget.existingRequest!;
       _titleController.text = r.title;
       _budgetController.text = r.budget;
       _descriptionController.text = r.description;
       _selectedType = _serviceTypes.contains(r.type) ? r.type : 'Plumbing';
       _selectedPriority = _priorities.contains(r.priority) ? r.priority : 'Medium';
-      // Note: existing image paths are kept separately; we don't reload XFile from path
     } else {
       if (widget.serviceType != null && _serviceTypes.contains(widget.serviceType)) {
         _selectedType = widget.serviceType!;
@@ -225,7 +222,6 @@ class _ClientRequestEditPageState extends State<ClientRequestEditPage> {
   void _saveRequest() {
     if (_formKey.currentState!.validate()) {
       if (_isEditing) {
-        // Merge new image paths with any existing ones
         final existingPaths = widget.existingRequest!.imagePaths;
         final newPaths = _selectedImages.map((img) => img.path).toList();
         final allPaths = [...existingPaths, ...newPaths];
@@ -261,7 +257,6 @@ class _ClientRequestEditPageState extends State<ClientRequestEditPage> {
           );
         }
       } else {
-        // Create new request
         final newRequest = Request(
           id: 'req_${DateTime.now().millisecondsSinceEpoch}',
           title: _titleController.text.trim(),
@@ -358,9 +353,7 @@ class _ClientRequestEditPageState extends State<ClientRequestEditPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Existing image paths from the request (when editing)
     final existingPaths = widget.existingRequest?.imagePaths ?? [];
-    // The preview image: prefer new, then existing
     final hasNewImages = _selectedImages.isNotEmpty;
     final hasExistingImages = existingPaths.isNotEmpty;
 
@@ -437,7 +430,6 @@ class _ClientRequestEditPageState extends State<ClientRequestEditPage> {
                                       : _displayImageFromPath(existingPaths[0]),
                                 ),
                               ),
-                              // Show total count badge
                               if ((hasNewImages ? _selectedImages.length : 0) + existingPaths.length > 1)
                                 Positioned(
                                   top: 8, right: 8,
