@@ -5,10 +5,9 @@ class Request {
   final String budget;
   final String description;
   final String priority;
-  final List<String> imagePaths; // Store image paths
+  final List<String> imagePaths;
   final DateTime createdAt;
   
-  // User information
   final String userId;
   final String userName;
   final String userEmail;
@@ -19,8 +18,7 @@ class Request {
   final String? userBarangay;
   final String? userAddress;
   
-  // Request status
-  String status; // 'pending', 'in_progress', 'completed', 'cancelled'
+  String status;
 
   Request({
     required this.id,
@@ -85,7 +83,6 @@ class Request {
     );
   }
 
-  // Get priority color
   String get priorityColor {
     switch (priority.toLowerCase()) {
       case 'urgent':
@@ -101,7 +98,6 @@ class Request {
     }
   }
 
-  // Get time ago string
   String get timeAgo {
     final now = DateTime.now();
     final difference = now.difference(createdAt);
