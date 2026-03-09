@@ -4,7 +4,7 @@ class User {
   final String email;
   final String phone;
   final String password;
-  final String userType; // 'client' or 'worker'
+  final String userType;
   final String? gender;
   final String? birthdate;
   final String? city;
@@ -25,7 +25,6 @@ class User {
     this.address,
   });
 
-  // Create a copy of User with updated fields
   User copyWith({
     String? id,
     String? name,
@@ -53,8 +52,7 @@ class User {
       address: address ?? this.address,
     );
   }
-
-  // Check if profile is complete
+  
   bool get isProfileComplete {
     return gender != null && gender!.isNotEmpty &&
            birthdate != null && birthdate!.isNotEmpty &&
