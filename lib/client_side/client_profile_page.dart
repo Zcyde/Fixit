@@ -12,11 +12,10 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  String _selectedTab = 'profile'; // 'profile' or 'history'
+  String _selectedTab = 'profile'; 
   bool _isEditing = false;
   late bool _wasProfileIncompleteOnLoad;
   
-  // Form controllers
   late TextEditingController _nameController;
   late TextEditingController _contactController;
   late TextEditingController _emailController;
@@ -30,10 +29,8 @@ class _ProfilePageState extends State<ProfilePage> {
   void initState() {
     super.initState();
     
-    // Store the original profile completion state
     _wasProfileIncompleteOnLoad = !widget.user.isProfileComplete;
     
-    // Initialize controllers with user data
     _nameController = TextEditingController(text: widget.user.name);
     _contactController = TextEditingController(text: widget.user.phone);
     _emailController = TextEditingController(text: widget.user.email);
@@ -43,7 +40,6 @@ class _ProfilePageState extends State<ProfilePage> {
     _barangayController = TextEditingController(text: widget.user.barangay ?? '');
     _addressController = TextEditingController(text: widget.user.address ?? '');
     
-    // If profile is incomplete, automatically enable editing mode
     if (_wasProfileIncompleteOnLoad) {
       _isEditing = true;
     }
@@ -64,7 +60,6 @@ class _ProfilePageState extends State<ProfilePage> {
 
   void _handleEditProfile() {
     if (_isEditing) {
-      // Check if all required fields are filled
       if (_genderController.text.trim().isEmpty ||
           _birthdateController.text.trim().isEmpty ||
           _cityController.text.trim().isEmpty ||
@@ -79,7 +74,6 @@ class _ProfilePageState extends State<ProfilePage> {
         return;
       }
 
-      // Save changes
       final updatedUser = widget.user.copyWith(
         name: _nameController.text.trim(),
         phone: _contactController.text.trim(),
@@ -106,7 +100,6 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
         );
 
-        // If this was first time completing profile, go back to home
         if (_wasProfileIncompleteOnLoad) {
           Future.delayed(const Duration(seconds: 1), () {
             if (mounted) {
@@ -123,13 +116,10 @@ class _ProfilePageState extends State<ProfilePage> {
         );
       }
     } else {
-      // Check if profile is complete - if yes, require password
-      // Get fresh user data from database to check current state
       final currentUser = UsersDatabase.getUserById(widget.user.id);
       if (currentUser != null && currentUser.isProfileComplete) {
         _showPasswordVerificationDialog();
       } else {
-        // Profile incomplete, allow editing without password
         setState(() {
           _isEditing = true;
         });
@@ -201,14 +191,12 @@ class _ProfilePageState extends State<ProfilePage> {
                 final enteredPassword = passwordController.text.trim();
                 
                 if (enteredPassword == widget.user.password) {
-                  // Password correct
                   passwordController.dispose();
                   Navigator.pop(context);
                   setState(() {
                     _isEditing = true;
                   });
                 } else {
-                  // Password incorrect
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('Incorrect password'),
@@ -233,7 +221,6 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   void _cancelEdit() {
-    // Don't allow canceling if profile is still incomplete
     if (_wasProfileIncompleteOnLoad) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -246,7 +233,6 @@ class _ProfilePageState extends State<ProfilePage> {
     
     setState(() {
       _isEditing = false;
-      // Reset controllers to original user data
       _nameController.text = widget.user.name;
       _contactController.text = widget.user.phone;
       _emailController.text = widget.user.email;
@@ -302,10 +288,8 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
-        // Get fresh user data to check current state
         final currentUser = UsersDatabase.getUserById(widget.user.id);
         
-        // Prevent back navigation if profile is incomplete
         if (currentUser != null && !currentUser.isProfileComplete) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -325,7 +309,6 @@ class _ProfilePageState extends State<ProfilePage> {
           leading: IconButton(
             icon: const Icon(Icons.arrow_back, color: Colors.black),
             onPressed: () {
-              // Get fresh user data to check current state
               final currentUser = UsersDatabase.getUserById(widget.user.id);
               
               if (currentUser != null && !currentUser.isProfileComplete) {
@@ -340,179 +323,238 @@ class _ProfilePageState extends State<ProfilePage> {
               }
             },
           ),
-        title: const Text(
-          'Profile Page',
-          style: TextStyle(
-            color: Colors.black,
-            fontWeight: FontWeight.bold,
+          title: const Text(
+            'Profile Page',
+            style: TextStyle(
+              color: Colors.black,
+              fontWeight: FontWeight.bold,
+            ),
           ),
-        ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Center(
-              child: Text(
-                'Hello, ${widget.user.name}',
-                style: TextStyle(
-                  color: Colors.grey[700],
-                  fontSize: 14,
+          actions: [
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Center(
+                child: Text(
+                  'Hello, ${widget.user.name}',
+                  style: TextStyle(
+                    color: Colors.grey[700],
+                    fontSize: 14,
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Container(
-            color: Colors.grey[300],
-            height: 1,
+          ],
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(1),
+            child: Container(
+              color: Colors.grey[300],
+              height: 1,
+            ),
           ),
         ),
-      ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            children: [
-              // Profile Picture
-              Container(
-                width: 100,
-                height: 100,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.grey[300],
-                  border: Border.all(color: Colors.grey[400]!, width: 2),
-                ),
-                child: Icon(
-                  Icons.person,
-                  size: 50,
-                  color: Colors.grey[600],
-                ),
-              ),
-              const SizedBox(height: 16),
-              
-              // Username
-              Text(
-                widget.user.name,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 24),
-              
-              // Profile / History Tabs
-              Row(
-                children: [
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _selectedTab = 'profile';
-                        });
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        decoration: BoxDecoration(
-                          color: _selectedTab == 'profile' ? const Color(0xFF2D7A5E) : Colors.white,
-                          border: Border.all(
-                            color: _selectedTab == 'profile' ? const Color(0xFF2D7A5E) : Colors.grey[300]!,
-                            width: 1,
-                          ),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Center(
-                          child: Text(
-                            'Profile',
-                            style: TextStyle(
-                              color: _selectedTab == 'profile' ? Colors.white : Colors.black,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
+        body: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              children: [
+                Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.grey[300],
+                    border: Border.all(color: Colors.grey[400]!, width: 2),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _selectedTab = 'history';
-                        });
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        decoration: BoxDecoration(
-                          color: _selectedTab == 'history' ? const Color(0xFF2D7A5E) : Colors.white,
-                          border: Border.all(
-                            color: _selectedTab == 'history' ? const Color(0xFF2D7A5E) : Colors.grey[300]!,
-                            width: 1,
-                          ),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Center(
-                          child: Text(
-                            'History',
-                            style: TextStyle(
-                              color: _selectedTab == 'history' ? Colors.white : Colors.black,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
+                  child: Icon(
+                    Icons.person,
+                    size: 50,
+                    color: Colors.grey[600],
                   ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              
-              // Show content based on selected tab
-              if (_selectedTab == 'profile') ...[
-                // Profile Form
-                _buildTextField('Name', _nameController),
-                const SizedBox(height: 16),
-                _buildTextField('Contact Number', _contactController),
-                const SizedBox(height: 16),
-                _buildTextField('Email', _emailController),
-                const SizedBox(height: 16),
-                
-                // Gender and Birthdate Row
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildTextField('Gender', _genderController),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _buildTextField('Birthdate', _birthdateController),
-                    ),
-                  ],
                 ),
                 const SizedBox(height: 16),
                 
-                // City and Barangay Row
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildTextField('City', _cityController),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _buildTextField('Barangay', _barangayController),
-                    ),
-                  ],
+                Text(
+                  widget.user.name,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-                const SizedBox(height: 16),
-                
-                _buildTextField('Address', _addressController),
                 const SizedBox(height: 24),
                 
-                // Edit Profile / Save Buttons
-                if (_isEditing) ...[
-                  // Show cancel button only if profile was already complete
-                  if (_wasProfileIncompleteOnLoad) ...[
-                    // Just show save button for incomplete profiles
+                Row(
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _selectedTab = 'profile';
+                          });
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            color: _selectedTab == 'profile' ? const Color(0xFF2D7A5E) : Colors.white,
+                            border: Border.all(
+                              color: _selectedTab == 'profile' ? const Color(0xFF2D7A5E) : Colors.grey[300]!,
+                              width: 1,
+                            ),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Center(
+                            child: Text(
+                              'Profile',
+                              style: TextStyle(
+                                color: _selectedTab == 'profile' ? Colors.white : Colors.black,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _selectedTab = 'history';
+                          });
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            color: _selectedTab == 'history' ? const Color(0xFF2D7A5E) : Colors.white,
+                            border: Border.all(
+                              color: _selectedTab == 'history' ? const Color(0xFF2D7A5E) : Colors.grey[300]!,
+                              width: 1,
+                            ),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Center(
+                            child: Text(
+                              'History',
+                              style: TextStyle(
+                                color: _selectedTab == 'history' ? Colors.white : Colors.black,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                
+                if (_selectedTab == 'profile') ...[
+                  _buildTextField('Name', _nameController),
+                  const SizedBox(height: 16),
+                  _buildTextField('Contact Number', _contactController),
+                  const SizedBox(height: 16),
+                  _buildTextField('Email', _emailController),
+                  const SizedBox(height: 16),
+                  
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildTextField('Gender', _genderController),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildTextField('Birthdate', _birthdateController),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildTextField('City', _cityController),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildTextField('Barangay', _barangayController),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  _buildTextField('Address', _addressController),
+                  const SizedBox(height: 24),
+                  
+                  if (_isEditing) ...[
+                    if (_wasProfileIncompleteOnLoad) ...[
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: _handleEditProfile,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF2D7A5E),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          child: const Text(
+                            'SAVE',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ] else ...[
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: _cancelEdit,
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: Colors.black,
+                                side: BorderSide(color: Colors.grey[300]!, width: 1),
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              child: const Text(
+                                'CANCEL',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: _handleEditProfile,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF2D7A5E),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              child: const Text(
+                                'SAVE',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ] else ...[
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
@@ -526,7 +568,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           ),
                         ),
                         child: const Text(
-                          'SAVE',
+                          'EDIT PROFILE',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
@@ -534,141 +576,70 @@ class _ProfilePageState extends State<ProfilePage> {
                         ),
                       ),
                     ),
-                  ] else ...[
-                    // Show both cancel and save for complete profiles
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: _cancelEdit,
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: Colors.black,
-                              side: BorderSide(color: Colors.grey[300]!, width: 1),
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                            child: const Text(
-                              'CANCEL',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: _handleEditProfile,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF2D7A5E),
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                            child: const Text(
-                              'SAVE',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
                   ],
                 ] else ...[
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: _handleEditProfile,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF2D7A5E),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: const Text(
-                        'EDIT PROFILE',
+                  Container(
+                    padding: const EdgeInsets.all(32),
+                    child: Center(
+                      child: Text(
+                        'History coming soon!',
                         style: TextStyle(
                           fontSize: 16,
-                          fontWeight: FontWeight.w600,
+                          color: Colors.grey[600],
                         ),
                       ),
                     ),
                   ),
                 ],
-              ] else ...[
-                // History Tab - Empty for now
-                Container(
-                  padding: const EdgeInsets.all(32),
-                  child: Center(
-                    child: Text(
-                      'History coming soon!',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                  ),
-                ),
+                const SizedBox(height: 80), 
               ],
-              const SizedBox(height: 80), // Space for bottom nav
+            ),
+          ),
+        ),
+        bottomNavigationBar: Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFF2D7A5E),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 8,
+                offset: const Offset(0, -2),
+              ),
+            ],
+          ),
+          child: BottomNavigationBar(
+            type: BottomNavigationBarType.fixed,
+            backgroundColor: const Color(0xFF2D7A5E),
+            selectedItemColor: Colors.white,
+            unselectedItemColor: Colors.white70,
+            selectedFontSize: 12,
+            unselectedFontSize: 12,
+            currentIndex: 3,
+            onTap: (index) {
+              if (index != 3) {
+                Navigator.pop(context);
+              }
+            },
+            items: const [
+              BottomNavigationBarItem(
+                icon: Icon(Icons.home),
+                label: 'Home',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.assignment),
+                label: 'Requests',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.inbox),
+                label: 'Inbox',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.person),
+                label: 'Profile',
+              ),
             ],
           ),
         ),
-      ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: const Color(0xFF2D7A5E),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 8,
-              offset: const Offset(0, -2),
-            ),
-          ],
-        ),
-        child: BottomNavigationBar(
-          type: BottomNavigationBarType.fixed,
-          backgroundColor: const Color(0xFF2D7A5E),
-          selectedItemColor: Colors.white,
-          unselectedItemColor: Colors.white70,
-          selectedFontSize: 12,
-          unselectedFontSize: 12,
-          currentIndex: 3,
-          onTap: (index) {
-            if (index != 3) {
-              Navigator.pop(context);
-            }
-          },
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home),
-              label: 'Home',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.assignment),
-              label: 'Requests',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.inbox),
-              label: 'Inbox',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person),
-              label: 'Profile',
-            ),
-          ],
-        ),
-      ),
       ),
     );
   }
