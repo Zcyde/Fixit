@@ -30,17 +30,15 @@ class _SignUpPageState extends State<SignUpPage> {
       return;
     }
 
-    // Try to save user to database
     final success = UsersDatabase.signUp(
       name: name,
       email: email,
       phone: phone,
       password: password,
-      userType: 'client', // This is the client sign-up page
+      userType: 'client',
     );
 
     if (success) {
-      // Success - show message and navigate back
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Account created successfully! Please sign in.'),
@@ -48,13 +46,10 @@ class _SignUpPageState extends State<SignUpPage> {
           duration: Duration(seconds: 2),
         ),
       );
-
-      // Navigate back to sign in page after a delay
       Future.delayed(const Duration(seconds: 2), () {
         Navigator.pop(context);
       });
     } else {
-      // Email already exists
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('An account with this email already exists'),
@@ -100,7 +95,6 @@ class _SignUpPageState extends State<SignUpPage> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Logo
                     Container(
                       width: 80,
                       height: 80,
@@ -114,8 +108,6 @@ class _SignUpPageState extends State<SignUpPage> {
                       ),
                     ),
                     const SizedBox(height: 24),
-                    
-                    // Welcome text
                     const Text(
                       'Welcome to FixIt!',
                       style: TextStyle(
@@ -125,8 +117,7 @@ class _SignUpPageState extends State<SignUpPage> {
                       ),
                     ),
                     const SizedBox(height: 32),
-                    
-                    // Name field
+
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -147,8 +138,7 @@ class _SignUpPageState extends State<SignUpPage> {
                       ],
                     ),
                     const SizedBox(height: 20),
-                    
-                    // Email field
+
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -170,8 +160,7 @@ class _SignUpPageState extends State<SignUpPage> {
                       ],
                     ),
                     const SizedBox(height: 20),
-                    
-                    // Phone field
+
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -193,8 +182,7 @@ class _SignUpPageState extends State<SignUpPage> {
                       ],
                     ),
                     const SizedBox(height: 20),
-                    
-                    // Password field
+
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -216,8 +204,7 @@ class _SignUpPageState extends State<SignUpPage> {
                       ],
                     ),
                     const SizedBox(height: 12),
-                    
-                    // Already have an account link
+
                     Align(
                       alignment: Alignment.centerRight,
                       child: TextButton(
@@ -234,8 +221,7 @@ class _SignUpPageState extends State<SignUpPage> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    
-                    // Create Account button
+
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
