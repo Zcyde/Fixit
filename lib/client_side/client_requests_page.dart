@@ -20,7 +20,7 @@ class ClientRequestsPage extends StatefulWidget {
 class _ClientRequestsPageState extends State<ClientRequestsPage> {
   List<Request> _requests = [];
   final TextEditingController _searchController = TextEditingController();
-  int _selectedIndex = 1; // Set to 1 since this is the Requests page
+  int _selectedIndex = 1;
 
   @override
   void initState() {
@@ -86,7 +86,6 @@ class _ClientRequestsPageState extends State<ClientRequestsPage> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Image placeholder
             Container(
               width: 80,
               height: 80,
@@ -108,12 +107,10 @@ class _ClientRequestsPageState extends State<ClientRequestsPage> {
                     ),
             ),
             const SizedBox(width: 16),
-            // Request details
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Title
                   Text(
                     request.title,
                     style: const TextStyle(
@@ -125,7 +122,6 @@ class _ClientRequestsPageState extends State<ClientRequestsPage> {
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 4),
-                  // Time and budget
                   Row(
                     children: [
                       Text(
@@ -167,21 +163,20 @@ class _ClientRequestsPageState extends State<ClientRequestsPage> {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  // View Request button and comment icon
                   Row(
                     children: [
                       Expanded(
                         child: OutlinedButton(
                           onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ClientRequestDetailsPage(
-                              user: widget.user,
-                              request: request,
-                            ),
-                          ),
-                        ).then((_) => _loadRequests()); // refresh list on return
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ClientRequestDetailsPage(
+                                  user: widget.user,
+                                  request: request,
+                                ),
+                              ),
+                            ).then((_) => _loadRequests());
                           },
                           style: OutlinedButton.styleFrom(
                             foregroundColor: Colors.black,
@@ -252,15 +247,13 @@ class _ClientRequestsPageState extends State<ClientRequestsPage> {
     }
   }
 
-
-
   void _onNavItemTapped(int index) async {
     setState(() {
       _selectedIndex = index;
     });
 
     switch (index) {
-      case 0: // Home
+      case 0:
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
@@ -268,10 +261,9 @@ class _ClientRequestsPageState extends State<ClientRequestsPage> {
           ),
         );
         break;
-      case 1: // Requests
-        // Already on requests, do nothing
+      case 1:
         break;
-      case 2: // Inbox
+      case 2:
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Inbox coming soon!'),
@@ -279,19 +271,17 @@ class _ClientRequestsPageState extends State<ClientRequestsPage> {
             duration: Duration(seconds: 1),
           ),
         );
-        // Reset selection back to requests
         setState(() {
           _selectedIndex = 1;
         });
         break;
-      case 3: // Profile
+      case 3:
         await Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => ProfilePage(user: widget.user),
           ),
         );
-        // Reset selection back to requests after returning
         setState(() {
           _selectedIndex = 1;
         });
@@ -339,7 +329,6 @@ class _ClientRequestsPageState extends State<ClientRequestsPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Search bar with Sort button
               Row(
                 children: [
                   Expanded(
@@ -363,9 +352,7 @@ class _ClientRequestsPageState extends State<ClientRequestsPage> {
                                 border: InputBorder.none,
                                 hintStyle: TextStyle(color: Colors.grey[400]),
                               ),
-                              onChanged: (value) {
-                                // TODO: Implement search functionality
-                              },
+                              onChanged: (value) {},
                             ),
                           ),
                         ],
@@ -381,7 +368,6 @@ class _ClientRequestsPageState extends State<ClientRequestsPage> {
                     ),
                     child: TextButton(
                       onPressed: () {
-                        // TODO: Implement sort functionality
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text('Sort coming soon!'),
@@ -406,8 +392,6 @@ class _ClientRequestsPageState extends State<ClientRequestsPage> {
                 ],
               ),
               const SizedBox(height: 24),
-              
-              // My Requests heading
               const Text(
                 'My Requests',
                 style: TextStyle(
@@ -417,8 +401,6 @@ class _ClientRequestsPageState extends State<ClientRequestsPage> {
                 ),
               ),
               const SizedBox(height: 16),
-              
-              // Requests list
               Expanded(
                 child: _requests.isEmpty
                     ? Center(
