@@ -17,15 +17,12 @@ class WorkerHomePage extends StatefulWidget {
 
 class _WorkerHomePageState extends State<WorkerHomePage> {
   int _selectedNavIndex = 0;
-  String _selectedTab = 'available'; // 'available' or 'myjobs'
+  String _selectedTab = 'available'; 
 
-  // Tracks which request IDs this worker has submitted offers on
   final Set<String> _submittedOffers = {};
-  // Tracks which request IDs this worker has accepted (My Jobs)
   final Set<String> _myJobs = {};
 
   List<Request> get _availableJobs {
-    // Show all pending client requests that haven't been accepted by this worker
     return RequestsDatabase.getAllRequests()
         .where((r) =>
             r.status == 'pending' && !_myJobs.contains(r.id))
@@ -45,11 +42,9 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
   void _submitOffer(Request request) {
     setState(() {
       if (_submittedOffers.contains(request.id)) {
-        // Toggle: withdraw offer
         _submittedOffers.remove(request.id);
       } else {
         _submittedOffers.add(request.id);
-        // Simulate accepting: move to My Jobs
         _myJobs.add(request.id);
         _submittedOffers.remove(request.id);
       }
@@ -163,7 +158,6 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Job image
           ClipRRect(
             borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(12),
@@ -196,14 +190,11 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
                     ),
             ),
           ),
-
-          // Info below image
           Padding(
             padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Title
                 Text(
                   request.title,
                   style: const TextStyle(
@@ -215,8 +206,6 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 6),
-
-                // Distance + Price row
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -230,8 +219,6 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
                     ),
                   ],
                 ),
-
-                // Date + Time row
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -246,8 +233,6 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
                   ],
                 ),
                 const SizedBox(height: 10),
-
-                // Submit Offer / Status button
                 Center(
                   child: isMyJob
                       ? Container(
@@ -382,8 +367,6 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
                 child: Column(
                   children: [
                     const SizedBox(height: 12),
-
-                    // Avatar
                     Container(
                       width: 54,
                       height: 54,
@@ -395,8 +378,6 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
                       child: Icon(Icons.person, size: 30, color: Colors.grey[500]),
                     ),
                     const SizedBox(height: 16),
-
-                    // Stats row
                     Row(
                       children: [
                         _buildStatBox(
@@ -416,8 +397,6 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
                       ],
                     ),
                     const SizedBox(height: 16),
-
-                    // Tab toggle
                     Container(
                       decoration: BoxDecoration(
                         color: Colors.grey[200],
@@ -425,7 +404,6 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
                       ),
                       child: Row(
                         children: [
-                          // Available tab
                           Expanded(
                             child: GestureDetector(
                               onTap: () =>
@@ -465,7 +443,6 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
                               ),
                             ),
                           ),
-                          // My Jobs tab
                           Expanded(
                             child: GestureDetector(
                               onTap: () =>
@@ -499,8 +476,6 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
                       ),
                     ),
                     const SizedBox(height: 16),
-
-                    // Job cards or empty state
                     if (jobs.isEmpty)
                       _buildEmptyState(
                         _selectedTab == 'available'
@@ -521,8 +496,6 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
           ),
         ],
       ),
-
-      // Bottom nav
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: const Color(0xFF2D7A5E),
