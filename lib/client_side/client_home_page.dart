@@ -73,7 +73,7 @@ class _ClientHomePageState extends State<ClientHomePage> {
                     builder: (context) => ProfilePage(user: currentUser),
                   ),
                 );
-                if (!mounted) return; // Safety check
+                if (!mounted) return; 
                 _refreshUser();
               },
               style: ElevatedButton.styleFrom(
@@ -101,7 +101,7 @@ class _ClientHomePageState extends State<ClientHomePage> {
     switch (index) {
       case 0:
         break;
-      case 1: // Requests
+      case 1: 
         await Navigator.push(
           context,
           MaterialPageRoute(
@@ -109,7 +109,7 @@ class _ClientHomePageState extends State<ClientHomePage> {
           ),
         );
         break;
-      case 2: // Inbox
+      case 2:
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Inbox coming soon!'),
@@ -118,7 +118,7 @@ class _ClientHomePageState extends State<ClientHomePage> {
           ),
         );
         break;
-      case 3: // Profile
+      case 3:
         await Navigator.push(
           context,
           MaterialPageRoute(
@@ -129,7 +129,6 @@ class _ClientHomePageState extends State<ClientHomePage> {
         break;
     }
 
-    // Always return selection to Home icon if they navigated away
     if (mounted) {
       setState(() {
         _selectedIndex = 0;
@@ -183,7 +182,7 @@ class _ClientHomePageState extends State<ClientHomePage> {
                   const SizedBox(height: 4),
                   Text(
                     subtitle,
-                    maxLines: 1,
+                    maxLines: 5,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 12,
@@ -334,7 +333,6 @@ class _ClientHomePageState extends State<ClientHomePage> {
               ),
               const SizedBox(height: 24),
               
-              // Search bar
               Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -419,35 +417,35 @@ class _ClientHomePageState extends State<ClientHomePage> {
               ),
               const SizedBox(height: 16),
               
-              GridView.count(
+GridView.count(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 crossAxisCount: 2,
                 mainAxisSpacing: 12,
                 crossAxisSpacing: 12,
-                childAspectRatio: 0.80, // Slightly adjusted for text clearance
+                childAspectRatio: 0.80,
                 children: [
                   _buildServiceCard(
                     title: 'Carpenter',
-                    subtitle: 'Doors • Cabinets • Furniture',
+                    subtitle: 'Get expert help with repairing, building, or installing doors, cabinets, and custom wooden furniture.',
                     imagePath: 'assets/carpenter.jpg',
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => ClientRequestEditPage(serviceType: 'Carpentry', user: currentUser))),
                   ),
                   _buildServiceCard(
                     title: 'Welding',
-                    subtitle: 'Gate • Fence • Metal works',
+                    subtitle: 'Hire skilled professionals for repairing gates, fences, and completing various custom metal work projects.',
                     imagePath: 'assets/welding.jpg',
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => ClientRequestEditPage(serviceType: 'Welding', user: currentUser))),
                   ),
                   _buildServiceCard(
                     title: 'Plumber',
-                    subtitle: 'Pipes • Faucet • Leaks',
+                    subtitle: 'Quickly resolve issues with broken pipes, leaky faucets, and other essential water system repairs.',
                     imagePath: 'assets/plumber.jpg',
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => ClientRequestEditPage(serviceType: 'Plumbing', user: currentUser))),
                   ),
                   _buildServiceCard(
                     title: 'Electrician',
-                    subtitle: 'Wiring • Switch • Outlet',
+                    subtitle: 'Ensure your home is safe with professional repairs for wiring, faulty switches, and broken outlets.',
                     imagePath: 'assets/electrician.jpg',
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => ClientRequestEditPage(serviceType: 'Electrical', user: currentUser))),
                   ),
