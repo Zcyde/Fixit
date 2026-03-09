@@ -74,7 +74,6 @@ class _ClientRequestDetailsPageState extends State<ClientRequestDetailsPage> {
     }
   }
 
-  // ── Open full-screen viewer at a given index ──────────────────────────────
   void _openImageViewer(int startIndex) {
     Navigator.push(
       context,
@@ -87,7 +86,6 @@ class _ClientRequestDetailsPageState extends State<ClientRequestDetailsPage> {
     );
   }
 
-  // ── Photo section: hero + thumbnail strip ─────────────────────────────────
   Widget _buildPhotoSection() {
     final paths = _request.imagePaths;
 
@@ -120,7 +118,6 @@ class _ClientRequestDetailsPageState extends State<ClientRequestDetailsPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ── Hero image ──
         GestureDetector(
           onTap: () => _openImageViewer(0),
           child: Stack(
@@ -137,7 +134,6 @@ class _ClientRequestDetailsPageState extends State<ClientRequestDetailsPage> {
                   child: _buildImage(paths[0]),
                 ),
               ),
-              // "View" hint
               Positioned(
                 bottom: 10,
                 right: 10,
@@ -164,7 +160,6 @@ class _ClientRequestDetailsPageState extends State<ClientRequestDetailsPage> {
                   ),
                 ),
               ),
-              // Total count badge
               if (paths.length > 1)
                 Positioned(
                   top: 10,
@@ -195,8 +190,6 @@ class _ClientRequestDetailsPageState extends State<ClientRequestDetailsPage> {
             ],
           ),
         ),
-
-        // ── Thumbnail strip ──
         if (paths.length > 1) ...[
           const SizedBox(height: 10),
           SizedBox(
@@ -334,11 +327,8 @@ class _ClientRequestDetailsPageState extends State<ClientRequestDetailsPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── Photo Section ────────────────────────────────────────────
               _buildPhotoSection(),
               const SizedBox(height: 16),
-
-              // ── Request Info Card ────────────────────────────────────────
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
@@ -370,8 +360,6 @@ class _ClientRequestDetailsPageState extends State<ClientRequestDetailsPage> {
                       style: TextStyle(fontSize: 13, color: Colors.grey[600]),
                     ),
                     const SizedBox(height: 12),
-
-                    // Badges
                     Row(
                       children: [
                         Container(
@@ -412,7 +400,6 @@ class _ClientRequestDetailsPageState extends State<ClientRequestDetailsPage> {
                       ],
                     ),
                     const SizedBox(height: 14),
-
                     const Text(
                       'Description:',
                       style: TextStyle(
@@ -427,8 +414,6 @@ class _ClientRequestDetailsPageState extends State<ClientRequestDetailsPage> {
                           fontSize: 14, color: Colors.grey[700], height: 1.4),
                     ),
                     const SizedBox(height: 20),
-
-                    // Edit + Cancel buttons
                     Row(
                       children: [
                         Expanded(
@@ -483,8 +468,6 @@ class _ClientRequestDetailsPageState extends State<ClientRequestDetailsPage> {
                 ),
               ),
               const SizedBox(height: 16),
-
-              // ── Offers placeholder ───────────────────────────────────────
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
@@ -529,7 +512,6 @@ class _ClientRequestDetailsPageState extends State<ClientRequestDetailsPage> {
                   ],
                 ),
               ),
-
               const SizedBox(height: 80),
             ],
           ),
@@ -549,9 +531,6 @@ class _ClientRequestDetailsPageState extends State<ClientRequestDetailsPage> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Full-screen image viewer — swipe, pinch-zoom, dots, arrows
-// ─────────────────────────────────────────────────────────────────────────────
 class _ImageViewerPage extends StatefulWidget {
   final List<String> imagePaths;
   final int initialIndex;
@@ -618,7 +597,6 @@ class _ImageViewerPageState extends State<_ImageViewerPage> {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // ── Swipeable + zoomable images ──
           PageView.builder(
             controller: _pageController,
             itemCount: total,
@@ -629,15 +607,12 @@ class _ImageViewerPageState extends State<_ImageViewerPage> {
               child: Center(child: _buildImage(widget.imagePaths[index])),
             ),
           ),
-
-          // ── Top bar: close + counter ──
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Close
                   IconButton(
                     onPressed: () => Navigator.pop(context),
                     icon: Container(
@@ -649,7 +624,6 @@ class _ImageViewerPageState extends State<_ImageViewerPage> {
                       child: const Icon(Icons.close, color: Colors.white, size: 22),
                     ),
                   ),
-                  // Counter
                   Container(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 14, vertical: 6),
@@ -666,14 +640,11 @@ class _ImageViewerPageState extends State<_ImageViewerPage> {
                       ),
                     ),
                   ),
-                  // Balance spacer
                   const SizedBox(width: 48),
                 ],
               ),
             ),
           ),
-
-          // ── Left arrow ──
           if (total > 1 && _currentIndex > 0)
             Positioned(
               left: 8,
@@ -694,8 +665,6 @@ class _ImageViewerPageState extends State<_ImageViewerPage> {
                 ),
               ),
             ),
-
-          // ── Right arrow ──
           if (total > 1 && _currentIndex < total - 1)
             Positioned(
               right: 8,
@@ -716,8 +685,6 @@ class _ImageViewerPageState extends State<_ImageViewerPage> {
                 ),
               ),
             ),
-
-          // ── Dot indicators ──
           if (total > 1)
             Positioned(
               bottom: 36,
