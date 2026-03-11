@@ -26,7 +26,7 @@ class _ClientHomePageState extends State<ClientHomePage> {
     
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!currentUser.isProfileComplete) {
-        _showCompleteProfileDialog();
+        _completeProfilePopup();
       }
     });
   }
@@ -40,13 +40,13 @@ class _ClientHomePageState extends State<ClientHomePage> {
       
       if (!currentUser.isProfileComplete) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          _showCompleteProfileDialog();
+          _completeProfilePopup();
         });
       }
     }
   }
 
-  void _showCompleteProfileDialog() {
+  void _completeProfilePopup() {
     showDialog(
       context: context,
       barrierDismissible: false, 
