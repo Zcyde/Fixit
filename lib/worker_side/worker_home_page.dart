@@ -17,15 +17,22 @@ class WorkerHomePage extends StatefulWidget {
 
 class _WorkerHomePageState extends State<WorkerHomePage> {
   int _selectedNavIndex = 0;
-  String _selectedTab = 'available'; 
+  String _selectedTab = 'available';
 
   final Set<String> _submittedOffers = {};
   final Set<String> _myJobs = {};
 
+  // ── Service categories using local assets ──────────────────────────────────
+  static const List<Map<String, String>> _serviceCategories = [
+    {'label': 'Carpenter',    'image': 'assets/carpenter.jpg'},
+    {'label': 'Welding',      'image': 'assets/welding.jpg'},
+    {'label': 'Plumber',      'image': 'assets/plumber.jpg'},
+    {'label': 'Electrician',  'image': 'assets/electrician.jpg'},
+  ];
+
   List<Request> get _availableJobs {
     return RequestsDatabase.getAllRequests()
-        .where((r) =>
-            r.status == 'pending' && !_myJobs.contains(r.id))
+        .where((r) => r.status == 'pending' && !_myJobs.contains(r.id))
         .toList()
       ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
   }
@@ -37,17 +44,10 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
       ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
   }
 
-  int get _jobsDoneCount => _workerJobs.length;
-
   void _submitOffer(Request request) {
     setState(() {
-      if (_submittedOffers.contains(request.id)) {
-        _submittedOffers.remove(request.id);
-      } else {
-        _submittedOffers.add(request.id);
-        _myJobs.add(request.id);
-        _submittedOffers.remove(request.id);
-      }
+      _myJobs.add(request.id);
+      _submittedOffers.remove(request.id);
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -100,38 +100,44 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
     return 'Evening';
   }
 
-  Widget _buildStatBox({required String value, required String label}) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
+  // ── Greeting card replacing stats row ─────────────────────────────────────
+  Widget _buildGreetingCard(String workerName) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      color: Colors.white,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
           children: [
-            Text(
-              value,
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: const Color(0xFFE8F5F1),
+                border: Border.all(color: const Color(0xFF2D7A5E), width: 2),
               ),
+              child: const Icon(Icons.person, size: 26, color: Color(0xFF2D7A5E)),
             ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 13,
-                color: Colors.grey[600],
-              ),
+            const SizedBox(width: 14),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Hello, $workerName!',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Here are the available jobs for you.',
+                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                ),
+              ],
             ),
           ],
         ),
@@ -139,56 +145,111 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
     );
   }
 
+  // ── NEW: horizontal service-category cards with Image.asset ────────────────
+  Widget _buildServiceCategoriesRow() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Service Categories',
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+        ),
+        const SizedBox(height: 10),
+        SizedBox(
+          height: 110,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: _serviceCategories.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 10),
+            itemBuilder: (context, index) {
+              final category = _serviceCategories[index];
+              return SizedBox(
+                width: 90,
+                child: Card(
+                  elevation: 3,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Local asset image
+                      SizedBox(
+                        height: 72,
+                        child: Image.asset(
+                          category['image']!,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      Expanded(
+                        child: Container(
+                          color: Colors.white,
+                          alignment: Alignment.center,
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          child: Text(
+                            category['label']!,
+                            textAlign: TextAlign.center,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ── Job card now uses Card widget ──────────────────────────────────────────
   Widget _buildJobCard(Request request, {bool isMyJob = false}) {
     final hasImage = request.imagePaths.isNotEmpty;
 
-    return Container(
+    return Card(
+      elevation: 3,
       margin: const EdgeInsets.only(bottom: 14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.07),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ClipRRect(
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(12),
-              topRight: Radius.circular(12),
-            ),
-            child: SizedBox(
-              width: double.infinity,
-              height: 140,
-              child: hasImage
-                  ? _buildImage(request.imagePaths[0])
-                  : Container(
-                      color: Colors.grey[200],
-                      child: Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.construction, size: 40, color: Colors.grey[400]),
-                            const SizedBox(height: 6),
-                            Text(
-                              request.type,
-                              style: TextStyle(
-                                color: Colors.grey[500],
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
-                              ),
+          // Image / placeholder
+          SizedBox(
+            width: double.infinity,
+            height: 140,
+            child: hasImage
+                ? _buildImage(request.imagePaths[0])
+                : Container(
+                    color: Colors.grey[200],
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.construction,
+                              size: 40, color: Colors.grey[400]),
+                          const SizedBox(height: 6),
+                          Text(
+                            request.type,
+                            style: TextStyle(
+                              color: Colors.grey[500],
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
-            ),
+                  ),
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
@@ -210,12 +271,14 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      '${request.userCity ?? 'Nearby'}',
-                      style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+                      request.userCity ?? 'Nearby',
+                      style:
+                          TextStyle(fontSize: 12, color: Colors.grey[700]),
                     ),
                     Text(
                       'PHP ${request.budget}',
-                      style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+                      style:
+                          TextStyle(fontSize: 12, color: Colors.grey[700]),
                     ),
                   ],
                 ),
@@ -224,11 +287,13 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
                   children: [
                     Text(
                       _formatDate(request.createdAt),
-                      style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+                      style:
+                          TextStyle(fontSize: 12, color: Colors.grey[700]),
                     ),
                     Text(
                       _timeOfDay(request.createdAt),
-                      style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+                      style:
+                          TextStyle(fontSize: 12, color: Colors.grey[700]),
                     ),
                   ],
                 ),
@@ -290,10 +355,7 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
             const SizedBox(height: 16),
             Text(
               message,
-              style: TextStyle(
-                fontSize: 15,
-                color: Colors.grey[500],
-              ),
+              style: TextStyle(fontSize: 15, color: Colors.grey[500]),
               textAlign: TextAlign.center,
             ),
           ],
@@ -365,38 +427,19 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 12),
-                    Container(
-                      width: 54,
-                      height: 54,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.grey[200],
-                        border: Border.all(color: Colors.grey[300]!, width: 2),
-                      ),
-                      child: Icon(Icons.person, size: 30, color: Colors.grey[500]),
-                    ),
+
+                    // Greeting card
+                    _buildGreetingCard(workerName),
                     const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        _buildStatBox(
-                          value: '$_jobsDoneCount',
-                          label: 'Jobs',
-                        ),
-                        const SizedBox(width: 10),
-                        _buildStatBox(
-                          value: '—',
-                          label: 'Earned',
-                        ),
-                        const SizedBox(width: 10),
-                        _buildStatBox(
-                          value: '—',
-                          label: 'Rating',
-                        ),
-                      ],
-                    ),
+
+                    // ✅ Service categories row (local assets + Card widgets)
+                    _buildServiceCategoriesRow(),
                     const SizedBox(height: 16),
+
+                    // Available / My Jobs tabs
                     Container(
                       decoration: BoxDecoration(
                         color: Colors.grey[200],
@@ -406,8 +449,8 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
                         children: [
                           Expanded(
                             child: GestureDetector(
-                              onTap: () =>
-                                  setState(() => _selectedTab = 'available'),
+                              onTap: () => setState(
+                                  () => _selectedTab = 'available'),
                               child: AnimatedContainer(
                                 duration: const Duration(milliseconds: 200),
                                 padding:
@@ -476,6 +519,8 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
                       ),
                     ),
                     const SizedBox(height: 16),
+
+                    // Job list
                     if (jobs.isEmpty)
                       _buildEmptyState(
                         _selectedTab == 'available'
