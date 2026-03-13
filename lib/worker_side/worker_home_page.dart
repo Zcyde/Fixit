@@ -156,7 +156,7 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
         ),
         const SizedBox(height: 10),
         SizedBox(
-          height: 110,
+          height: 150,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             itemCount: _serviceCategories.length,
@@ -164,7 +164,7 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
             itemBuilder: (context, index) {
               final category = _serviceCategories[index];
               return SizedBox(
-                width: 90,
+                width: 130,
                 child: Card(
                   elevation: 3,
                   shape: RoundedRectangleBorder(
@@ -176,7 +176,7 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
                     children: [
                       // Local asset image
                       SizedBox(
-                        height: 72,
+                        height: 105,
                         child: Image.asset(
                           category['image']!,
                           fit: BoxFit.cover,
@@ -193,7 +193,7 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
-                              fontSize: 11,
+                              fontSize: 13,
                               fontWeight: FontWeight.w600,
                               color: Colors.black87,
                             ),
