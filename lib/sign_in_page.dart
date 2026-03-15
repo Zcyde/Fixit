@@ -170,7 +170,7 @@ class _SignInPageState extends State<SignInPage> {
                     ),
                     const SizedBox(height: 12),
 
-                    // add account (for clients only)
+                    // add an account
                     Align(
                       alignment: Alignment.centerRight,
                       child: GestureDetector(
