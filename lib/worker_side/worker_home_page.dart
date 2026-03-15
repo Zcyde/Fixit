@@ -22,8 +22,7 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
   final Set<String> _submittedOffers = {};
   final Set<String> _myJobs = {};
 
-  // ── Service categories using local assets ──────────────────────────────────
-  static const List<Map<String, String>> _serviceCategories = [
+  static const List<Map<String, String>> _serviceCategories =[
     {'label': 'Carpenter',    'image': 'assets/carpenter.jpg'},
     {'label': 'Welding',      'image': 'assets/welding.jpg'},
     {'label': 'Plumber',      'image': 'assets/plumber.jpg'},
@@ -44,7 +43,7 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
       ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
   }
 
-  void _submitOffer(Request request) {
+  void _offerSubmission(Request request) {
     setState(() {
       _myJobs.add(request.id);
       _submittedOffers.remove(request.id);
@@ -60,23 +59,23 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
     );
   }
 
-  Widget _buildImage(String imagePath) {
+  Widget _imageContent(String imagePath) {
     if (kIsWeb) {
       return Image.network(
         imagePath,
         fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => _imagePlaceholder(),
+        errorBuilder: (_, __, ___) => _placeholder(),
       );
     } else {
       return Image.file(
         File(imagePath),
         fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => _imagePlaceholder(),
+        errorBuilder: (_, __, ___) => _placeholder(),
       );
     }
   }
 
-  Widget _imagePlaceholder() {
+  Widget _placeholder() {
     return Container(
       color: Colors.grey[300],
       child: Center(
@@ -85,23 +84,22 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
     );
   }
 
-  String _formatDate(DateTime dt) {
-    const months = [
+  String _dateString(DateTime dt) {
+    const months =[
       'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
     ];
     return '${months[dt.month - 1]} ${dt.day}';
   }
 
-  String _timeOfDay(DateTime dt) {
+  String _timeString(DateTime dt) {
     final hour = dt.hour;
     if (hour < 12) return 'Morning';
     if (hour < 17) return 'Afternoon';
     return 'Evening';
   }
 
-  // ── Greeting card replacing stats row ─────────────────────────────────────
-  Widget _buildGreetingCard(String workerName) {
+  Widget _helloCard(String workerName) {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -109,10 +107,9 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         child: Row(
-          children: [
+          children:[
             Container(
-              width: 48,
-              height: 48,
+              width: 48, height: 48,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: const Color(0xFFE8F5F1),
@@ -123,13 +120,11 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
             const SizedBox(width: 14),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+              children:[
                 Text(
                   'Hello, $workerName!',
                   style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
+                    fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -145,11 +140,10 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
     );
   }
 
-  // ── NEW: horizontal service-category cards with Image.asset ────────────────
-  Widget _buildServiceCategoriesRow() {
+  Widget _categoriesRow() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
+      children:[
         const Text(
           'Service Categories',
           style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
@@ -173,8 +167,7 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
                   clipBehavior: Clip.antiAlias,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      // Local asset image
+                    children:[
                       SizedBox(
                         height: 105,
                         child: Image.asset(
@@ -189,9 +182,7 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
                           padding: const EdgeInsets.symmetric(horizontal: 4),
                           child: Text(
                             category['label']!,
-                            textAlign: TextAlign.center,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
@@ -211,8 +202,7 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
     );
   }
 
-  // ── Job card now uses Card widget ──────────────────────────────────────────
-  Widget _buildJobCard(Request request, {bool isMyJob = false}) {
+  Widget _jobCard(Request request, {bool isMyJob = false}) {
     final hasImage = request.imagePaths.isNotEmpty;
 
     return Card(
@@ -222,19 +212,18 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
       clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Image / placeholder
+        children:[
           SizedBox(
             width: double.infinity,
             height: 140,
             child: hasImage
-                ? _buildImage(request.imagePaths[0])
+                ? _imageContent(request.imagePaths[0])
                 : Container(
                     color: Colors.grey[200],
                     child: Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
+                        children:[
                           Icon(Icons.construction,
                               size: 40, color: Colors.grey[400]),
                           const SizedBox(height: 6),
@@ -255,7 +244,7 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
             padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+              children:[
                 Text(
                   request.title,
                   style: const TextStyle(
@@ -269,7 +258,7 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
                 const SizedBox(height: 6),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
+                  children:[
                     Text(
                       request.userCity ?? 'Nearby',
                       style:
@@ -284,14 +273,14 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
                 ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
+                  children:[
                     Text(
-                      _formatDate(request.createdAt),
+                      _dateString(request.createdAt),
                       style:
                           TextStyle(fontSize: 12, color: Colors.grey[700]),
                     ),
                     Text(
-                      _timeOfDay(request.createdAt),
+                      _timeString(request.createdAt),
                       style:
                           TextStyle(fontSize: 12, color: Colors.grey[700]),
                     ),
@@ -318,7 +307,7 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
                           ),
                         )
                       : GestureDetector(
-                          onTap: () => _submitOffer(request),
+                          onTap: () => _offerSubmission(request),
                           child: Container(
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 22, vertical: 8),
@@ -345,12 +334,12 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
     );
   }
 
-  Widget _buildEmptyState(String message) {
+  Widget _emptyState(String message) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.only(top: 60),
         child: Column(
-          children: [
+          children:[
             Icon(Icons.work_outline, size: 64, color: Colors.grey[300]),
             const SizedBox(height: 16),
             Text(
@@ -392,14 +381,14 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
             fontSize: 17,
           ),
         ),
-        actions: [
+        actions:[
           Container(
             margin: const EdgeInsets.only(right: 14, top: 10, bottom: 10),
             padding: const EdgeInsets.symmetric(horizontal: 14),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(20),
-              boxShadow: [
+              boxShadow:[
                 BoxShadow(
                   color: Colors.black.withOpacity(0.06),
                   blurRadius: 4,
@@ -421,32 +410,26 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
         ],
       ),
       body: Column(
-        children: [
+        children:[
           Expanded(
             child: SingleChildScrollView(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+                  children:[
                     const SizedBox(height: 12),
-
-                    // Greeting card
-                    _buildGreetingCard(workerName),
+                    _helloCard(workerName),
                     const SizedBox(height: 16),
-
-                    // ✅ Service categories row (local assets + Card widgets)
-                    _buildServiceCategoriesRow(),
+                    _categoriesRow(),
                     const SizedBox(height: 16),
-
-                    // Available / My Jobs tabs
                     Container(
                       decoration: BoxDecoration(
                         color: Colors.grey[200],
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
-                        children: [
+                        children:[
                           Expanded(
                             child: GestureDetector(
                               onTap: () => setState(
@@ -461,7 +444,7 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
                                       : Colors.transparent,
                                   borderRadius: BorderRadius.circular(8),
                                   boxShadow: _selectedTab == 'available'
-                                      ? [
+                                      ?[
                                           BoxShadow(
                                             color: Colors.black
                                                 .withOpacity(0.08),
@@ -469,7 +452,7 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
                                             offset: const Offset(0, 1),
                                           )
                                         ]
-                                      : [],
+                                      :[],
                                 ),
                                 child: Center(
                                   child: Text(
@@ -519,20 +502,17 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
                       ),
                     ),
                     const SizedBox(height: 16),
-
-                    // Job list
                     if (jobs.isEmpty)
-                      _buildEmptyState(
+                      _emptyState(
                         _selectedTab == 'available'
                             ? 'No available jobs right now.\nCheck back when clients post requests.'
                             : 'You haven\'t taken any jobs yet.',
                       )
                     else
-                      ...jobs.map((r) => _buildJobCard(
+                      ...jobs.map((r) => _jobCard(
                             r,
                             isMyJob: _selectedTab == 'myjobs',
                           )),
-
                     const SizedBox(height: 20),
                   ],
                 ),
@@ -544,7 +524,7 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: const Color(0xFF2D7A5E),
-          boxShadow: [
+          boxShadow:[
             BoxShadow(
               color: Colors.black.withOpacity(0.12),
               blurRadius: 8,
@@ -573,7 +553,7 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
               setState(() => _selectedNavIndex = 0);
             }
           },
-          items: const [
+          items: const[
             BottomNavigationBarItem(
               icon: Icon(Icons.grid_view_rounded),
               label: 'Dashboard',
