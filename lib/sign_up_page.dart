@@ -118,7 +118,7 @@ class _SignUpPageState extends State<SignUpPage> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Logo placeholder
+                    // the logo image asset
                     Center(
                       child: Image.asset(
                         'Fixit_logo.png',
@@ -128,7 +128,7 @@ class _SignUpPageState extends State<SignUpPage> {
                     ),
                     const SizedBox(height: 20),
 
-                    // Title
+                    //  the application's greeting text
                     const Center(
                       child: Text(
                         'Welcome to Fixit!',
@@ -141,7 +141,7 @@ class _SignUpPageState extends State<SignUpPage> {
                     ),
                     const SizedBox(height: 28),
 
-                    // Client / Worker toggle
+                    // client / worker mode toggle
                     Container(
                       decoration: BoxDecoration(
                         color: Colors.grey[100],
@@ -157,7 +157,7 @@ class _SignUpPageState extends State<SignUpPage> {
                     ),
                     const SizedBox(height: 24),
 
-                    // Name
+                    // name input
                     _buildLabel('Name:'),
                     const SizedBox(height: 8),
                     _buildTextField(
@@ -166,7 +166,7 @@ class _SignUpPageState extends State<SignUpPage> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Email
+                    // email input
                     _buildLabel('Email:'),
                     const SizedBox(height: 8),
                     _buildTextField(
@@ -176,7 +176,7 @@ class _SignUpPageState extends State<SignUpPage> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Phone
+                    // phone number input
                     _buildLabel('Phone:'),
                     const SizedBox(height: 8),
                     _buildTextField(
@@ -186,7 +186,7 @@ class _SignUpPageState extends State<SignUpPage> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Password
+                    // password input
                     _buildLabel('Password:'),
                     const SizedBox(height: 8),
                     _buildTextField(
@@ -207,7 +207,7 @@ class _SignUpPageState extends State<SignUpPage> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Confirm Password
+                    // confirm password input
                     _buildLabel('Confirm Password:'),
                     const SizedBox(height: 8),
                     _buildTextField(
@@ -229,7 +229,7 @@ class _SignUpPageState extends State<SignUpPage> {
                     ),
                     const SizedBox(height: 12),
 
-                    // Already have an account
+                    // back to sign in page
                     Align(
                       alignment: Alignment.centerRight,
                       child: GestureDetector(
@@ -245,7 +245,6 @@ class _SignUpPageState extends State<SignUpPage> {
                     ),
                     const SizedBox(height: 20),
 
-                    // Create Account button
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
