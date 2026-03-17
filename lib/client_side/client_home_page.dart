@@ -23,12 +23,7 @@ class _ClientHomePageState extends State<ClientHomePage> {
   void initState() {
     super.initState();
     currentUser = widget.user;
-    
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!currentUser.isProfileComplete) {
-        _completeProfilePopup();
-      }
-    });
+    // Removed the auto-popup from here to allow exploring
   }
 
   void _refreshUser() {
@@ -37,19 +32,22 @@ class _ClientHomePageState extends State<ClientHomePage> {
       setState(() {
         currentUser = updatedUser;
       });
-      
-      if (!currentUser.isProfileComplete) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          _completeProfilePopup();
-        });
-      }
     }
   }
 
-  void _completeProfilePopup() {
+  // Returns true if profile is complete, otherwise shows the popup and returns false
+  bool _checkProfileAndProceed() {
+    if (currentUser.isProfileComplete) {
+      return true;
+    } else {
+      _showCompleteProfileRequirement();
+      return false;
+    }
+  }
+
+  void _showCompleteProfileRequirement() {
     showDialog(
       context: context,
-      barrierDismissible: false, 
       builder: (BuildContext context) {
         return AlertDialog(
           shape: RoundedRectangleBorder(
@@ -57,13 +55,17 @@ class _ClientHomePageState extends State<ClientHomePage> {
             side: const BorderSide(color: Colors.black, width: 2),
           ),
           title: const Text(
-            'Complete Your Profile',
+            'Action Restricted',
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
           content: const Text(
-            'You need to complete your profile before using the app. Please fill in all your information.',
+            'You need to complete your profile before you can create a request.',
           ),
           actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Later', style: TextStyle(color: Colors.grey)),
+            ),
             ElevatedButton(
               onPressed: () async {
                 Navigator.pop(context); 
@@ -73,15 +75,12 @@ class _ClientHomePageState extends State<ClientHomePage> {
                     builder: (context) => ProfilePage(user: currentUser),
                   ),
                 );
-                if (!mounted) return; 
-                _refreshUser();
+                if (mounted) _refreshUser();
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.black,
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(4),
-                ),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
               ),
               child: const Text('Complete Profile'),
             ),
@@ -140,10 +139,22 @@ class _ClientHomePageState extends State<ClientHomePage> {
     required String title,
     required String subtitle,
     required String imagePath,
-    required VoidCallback onTap,
+    required String serviceType,
   }) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: () {
+        if (_checkProfileAndProceed()) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ClientRequestEditPage(
+                serviceType: serviceType, 
+                user: currentUser
+              ),
+            ),
+          );
+        }
+      },
       child: Card(
         elevation: 3,                 
         margin: EdgeInsets.zero,      
@@ -159,10 +170,7 @@ class _ClientHomePageState extends State<ClientHomePage> {
             SizedBox(
               height: 120,
               width: double.infinity,
-              child: Image.asset(
-                imagePath,
-                fit: BoxFit.cover,
-              ),
+              child: Image.asset(imagePath, fit: BoxFit.cover),
             ),
             Padding(
               padding: const EdgeInsets.all(12),
@@ -173,21 +181,14 @@ class _ClientHomePageState extends State<ClientHomePage> {
                     title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     subtitle,
                     maxLines: 5,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[600],
-                    ),
+                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                   ),
                 ],
               ),
@@ -195,61 +196,6 @@ class _ClientHomePageState extends State<ClientHomePage> {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildHowItWorksStep({
-    required int number,
-    required String title,
-    required String description,
-  }) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(
-            color: Colors.grey[200],
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.grey[400]!, width: 2),
-          ),
-          child: Center(
-            child: Text(
-              '$number',
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                description,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[600],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
     );
   }
 
@@ -264,11 +210,7 @@ class _ClientHomePageState extends State<ClientHomePage> {
           children: [
             const Text(
               'Fixit',
-              style: TextStyle(
-                color: Colors.black,
-                fontWeight: FontWeight.w600,
-                fontSize: 16,
-              ),
+              style: TextStyle(color: Colors.black, fontWeight: FontWeight.w600, fontSize: 16),
             ),
             const SizedBox(width: 24),
             Container(
@@ -280,11 +222,7 @@ class _ClientHomePageState extends State<ClientHomePage> {
               ),
               child: const Text(
                 'Resident',
-                style: TextStyle(
-                  color: Colors.black,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
+                style: TextStyle(color: Colors.black, fontSize: 14, fontWeight: FontWeight.w500),
               ),
             ),
           ],
@@ -298,13 +236,7 @@ class _ClientHomePageState extends State<ClientHomePage> {
                 (route) => false,
               );
             },
-            child: const Text(
-              'Log out',
-              style: TextStyle(
-                color: Colors.black,
-                fontSize: 14,
-              ),
-            ),
+            child: const Text('Log out', style: TextStyle(color: Colors.black, fontSize: 14)),
           ),
         ],
       ),
@@ -316,23 +248,16 @@ class _ClientHomePageState extends State<ClientHomePage> {
             children: [
               const Text(
                 'Get help from talented people\nin your area',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                  height: 1.2,
-                ),
+                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, height: 1.2),
               ),
               const SizedBox(height: 12),
               Text(
                 'Report repair problems fast and track updates in one place.',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[700],
-                ),
+                style: TextStyle(fontSize: 14, color: Colors.grey[700]),
               ),
               const SizedBox(height: 24),
               
+              // Search Bar UI (Visual only)
               Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -341,10 +266,7 @@ class _ClientHomePageState extends State<ClientHomePage> {
                 ),
                 child: Row(
                   children: [
-                    const Padding(
-                      padding: EdgeInsets.all(12.0),
-                      child: Icon(Icons.search, color: Colors.grey),
-                    ),
+                    const Padding(padding: EdgeInsets.all(12.0), child: Icon(Icons.search, color: Colors.grey)),
                     const Expanded(child: SizedBox()),
                     Container(
                       margin: const EdgeInsets.all(6),
@@ -354,10 +276,7 @@ class _ClientHomePageState extends State<ClientHomePage> {
                         borderRadius: BorderRadius.circular(4),
                         border: Border.all(color: Colors.grey[400]!),
                       ),
-                      child: const Text(
-                        'Location',
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
-                      ),
+                      child: const Text('Location', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
                     ),
                   ],
                 ),
@@ -369,17 +288,18 @@ class _ClientHomePageState extends State<ClientHomePage> {
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ClientRequestEditPage(user: currentUser),
-                          ),
-                        );
+                        if (_checkProfileAndProceed()) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ClientRequestEditPage(user: currentUser),
+                            ),
+                          );
+                        }
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF2D7A5E),
                         foregroundColor: Colors.white,
-                        elevation: 0,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                       ),
@@ -390,6 +310,7 @@ class _ClientHomePageState extends State<ClientHomePage> {
                   Expanded(
                     child: OutlinedButton(
                       onPressed: () {
+                        // Navigating to ClientRequestsPage
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -409,15 +330,38 @@ class _ClientHomePageState extends State<ClientHomePage> {
                   ),
                 ],
               ),
+              const SizedBox(height: 12),
+              
+              // NEW: History Button implementation
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ClientRequestsPage(
+                          user: currentUser, 
+                        ),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.history, size: 18),
+                  label: const Text('View Request History'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.grey[700],
+                    side: BorderSide(color: Colors.grey[300]!),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+              ),
+
               const SizedBox(height: 32),
               
-              const Text(
-                'Popular Services',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
+              const Text('Popular Services', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 16),
               
-GridView.count(
+              GridView.count(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 crossAxisCount: 2,
@@ -427,49 +371,39 @@ GridView.count(
                 children: [
                   _buildServiceCard(
                     title: 'Carpenter',
-                    subtitle: 'Get expert help with repairing, building, or installing doors, cabinets, and custom wooden furniture.',
+                    subtitle: 'Repairing, building, or installing doors and cabinets.',
                     imagePath: 'assets/carpenter.jpg',
-                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => ClientRequestEditPage(serviceType: 'Carpentry', user: currentUser))),
+                    serviceType: 'Carpentry',
                   ),
                   _buildServiceCard(
                     title: 'Welding',
-                    subtitle: 'Hire skilled professionals for repairing gates, fences, and completing various custom metal work projects.',
+                    subtitle: 'Skilled professionals for gates, fences, and metal work.',
                     imagePath: 'assets/welding.jpg',
-                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => ClientRequestEditPage(serviceType: 'Welding', user: currentUser))),
+                    serviceType: 'Welding',
                   ),
                   _buildServiceCard(
                     title: 'Plumber',
-                    subtitle: 'Quickly resolve issues with broken pipes, leaky faucets, and other essential water system repairs.',
+                    subtitle: 'Resolve broken pipes, leaky faucets, and water systems.',
                     imagePath: 'assets/plumber.jpg',
-                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => ClientRequestEditPage(serviceType: 'Plumbing', user: currentUser))),
+                    serviceType: 'Plumbing',
                   ),
                   _buildServiceCard(
                     title: 'Electrician',
-                    subtitle: 'Ensure your home is safe with professional repairs for wiring, faulty switches, and broken outlets.',
+                    subtitle: 'Safe repairs for wiring, switches, and outlets.',
                     imagePath: 'assets/electrician.jpg',
-                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => ClientRequestEditPage(serviceType: 'Electrical', user: currentUser))),
+                    serviceType: 'Electrical',
                   ),
                 ],
               ),
-              const SizedBox(height: 32),
-              const Text('How it works', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 20),
-              _buildHowItWorksStep(number: 1, title: 'Describe your task', description: 'Add title, type, details, and photo.'),
-              const SizedBox(height: 16),
-              _buildHowItWorksStep(number: 2, title: 'Choose a technician', description: 'Assigned (simulated) based on category.'),
-              const SizedBox(height: 16),
-              _buildHowItWorksStep(number: 3, title: 'Schedule & Track', description: 'See status updates until done.'),
-              const SizedBox(height: 16),
-              _buildHowItWorksStep(number: 4, title: 'Get it done', description: 'Repair completed, record saved.'),
-              const SizedBox(height: 100), 
+              const SizedBox(height: 40), 
             ],
           ),
         ),
       ),
       bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: const Color(0xFF2D7A5E),
-          boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 8, offset: const Offset(0, -2))],
+        decoration: const BoxDecoration(
+          color: Color(0xFF2D7A5E),
+          boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, -2))],
         ),
         child: BottomNavigationBar(
           type: BottomNavigationBarType.fixed,
