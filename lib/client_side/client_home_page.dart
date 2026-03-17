@@ -5,6 +5,8 @@ import 'client_requests_page.dart';
 import '../users_data/user_model.dart';
 import '../sign_in_page.dart';
 import '../users_data/users_database.dart';
+// Ensure this path matches where your ChatPage is located
+import '../worker_side/chat_page.dart'; 
 
 class ClientHomePage extends StatefulWidget {
   final User user;
@@ -19,11 +21,13 @@ class _ClientHomePageState extends State<ClientHomePage> {
   int _selectedIndex = 0;
   late User currentUser;
 
+  // Track unread messages. In a real app, this comes from a database.
+  int unreadMessagesCount = 1; 
+
   @override
   void initState() {
     super.initState();
     currentUser = widget.user;
-    // Removed the auto-popup from here to allow exploring
   }
 
   void _refreshUser() {
@@ -35,7 +39,6 @@ class _ClientHomePageState extends State<ClientHomePage> {
     }
   }
 
-  // Returns true if profile is complete, otherwise shows the popup and returns false
   bool _checkProfileAndProceed() {
     if (currentUser.isProfileComplete) {
       return true;
@@ -91,15 +94,14 @@ class _ClientHomePageState extends State<ClientHomePage> {
   }
 
   void _onNavItemTapped(int index) async {
-    if (index == _selectedIndex) return;
+    // If we click Home, just update the index
+    if (index == 0) {
+      setState(() => _selectedIndex = 0);
+      return;
+    }
 
-    setState(() {
-      _selectedIndex = index;
-    });
-
+    // For other tabs, navigate to their respective pages
     switch (index) {
-      case 0:
-        break;
       case 1: 
         await Navigator.push(
           context,
@@ -108,12 +110,17 @@ class _ClientHomePageState extends State<ClientHomePage> {
           ),
         );
         break;
-      case 2:
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Inbox coming soon!'),
-            backgroundColor: Colors.black,
-            duration: Duration(seconds: 1),
+      case 2: // INBOX LOGIC
+        setState(() {
+          unreadMessagesCount = 0; // Clear the badge when opened
+        });
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const ChatPage(
+              initialMessage: '', 
+              workerName: 'Worker Support', // Pass the relevant name here
+            ),
           ),
         );
         break;
@@ -128,10 +135,9 @@ class _ClientHomePageState extends State<ClientHomePage> {
         break;
     }
 
+    // Reset index back to Home (0) after returning from other pages if desired
     if (mounted) {
-      setState(() {
-        _selectedIndex = 0;
-      });
+      setState(() => _selectedIndex = 0);
     }
   }
 
@@ -147,18 +153,18 @@ class _ClientHomePageState extends State<ClientHomePage> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => ClientRequestEditPage(
-                serviceType: serviceType, 
-                user: currentUser
+              builder: (_) => ClientRequestEditPage(
+                user: currentUser,
+                serviceType: serviceType,
               ),
             ),
           );
         }
       },
       child: Card(
-        elevation: 3,                 
-        margin: EdgeInsets.zero,      
-        color: Colors.white,          
+        elevation: 3,
+        margin: EdgeInsets.zero,
+        color: Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
           side: BorderSide(color: Colors.grey[300]!, width: 1),
@@ -257,7 +263,7 @@ class _ClientHomePageState extends State<ClientHomePage> {
               ),
               const SizedBox(height: 24),
               
-              // Search Bar UI (Visual only)
+              // Search Bar UI
               Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -310,7 +316,6 @@ class _ClientHomePageState extends State<ClientHomePage> {
                   Expanded(
                     child: OutlinedButton(
                       onPressed: () {
-                        // Navigating to ClientRequestsPage
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -330,32 +335,6 @@ class _ClientHomePageState extends State<ClientHomePage> {
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
-              
-              // NEW: History Button implementation
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ClientRequestsPage(
-                          user: currentUser, 
-                        ),
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.history, size: 18),
-                  label: const Text('View Request History'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.grey[700],
-                    side: BorderSide(color: Colors.grey[300]!),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
-                ),
-              ),
-
               const SizedBox(height: 32),
               
               const Text('Popular Services', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
@@ -369,33 +348,12 @@ class _ClientHomePageState extends State<ClientHomePage> {
                 crossAxisSpacing: 12,
                 childAspectRatio: 0.80,
                 children: [
-                  _buildServiceCard(
-                    title: 'Carpenter',
-                    subtitle: 'Repairing, building, or installing doors and cabinets.',
-                    imagePath: 'assets/carpenter.jpg',
-                    serviceType: 'Carpentry',
-                  ),
-                  _buildServiceCard(
-                    title: 'Welding',
-                    subtitle: 'Skilled professionals for gates, fences, and metal work.',
-                    imagePath: 'assets/welding.jpg',
-                    serviceType: 'Welding',
-                  ),
-                  _buildServiceCard(
-                    title: 'Plumber',
-                    subtitle: 'Resolve broken pipes, leaky faucets, and water systems.',
-                    imagePath: 'assets/plumber.jpg',
-                    serviceType: 'Plumbing',
-                  ),
-                  _buildServiceCard(
-                    title: 'Electrician',
-                    subtitle: 'Safe repairs for wiring, switches, and outlets.',
-                    imagePath: 'assets/electrician.jpg',
-                    serviceType: 'Electrical',
-                  ),
+                  _buildServiceCard(title: 'Carpenter', subtitle: 'Repairing, building doors.', imagePath: 'assets/carpenter.jpg', serviceType: 'Carpentry'),
+                  _buildServiceCard(title: 'Welding', subtitle: 'Metal work and fences.', imagePath: 'assets/welding.jpg', serviceType: 'Welding'),
+                  _buildServiceCard(title: 'Plumber', subtitle: 'Broken pipes and faucets.', imagePath: 'assets/plumber.jpg', serviceType: 'Plumbing'),
+                  _buildServiceCard(title: 'Electrician', subtitle: 'Wiring and switches.', imagePath: 'assets/electrician.jpg', serviceType: 'Electrical'),
                 ],
               ),
-              const SizedBox(height: 40), 
             ],
           ),
         ),
@@ -412,11 +370,19 @@ class _ClientHomePageState extends State<ClientHomePage> {
           unselectedItemColor: Colors.white70,
           currentIndex: _selectedIndex,
           onTap: _onNavItemTapped,
-          items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-            BottomNavigationBarItem(icon: Icon(Icons.assignment), label: 'Requests'),
-            BottomNavigationBarItem(icon: Icon(Icons.inbox), label: 'Inbox'),
-            BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+          items: [
+            const BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+            const BottomNavigationBarItem(icon: Icon(Icons.assignment), label: 'Requests'),
+            BottomNavigationBarItem(
+              icon: Badge(
+                label: Text('$unreadMessagesCount'),
+                isLabelVisible: unreadMessagesCount > 0,
+                backgroundColor: Colors.red,
+                child: const Icon(Icons.inbox),
+              ),
+              label: 'Inbox',
+            ),
+            const BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
           ],
         ),
       ),

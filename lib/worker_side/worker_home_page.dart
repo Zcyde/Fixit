@@ -5,6 +5,7 @@ import '../requests_data/requests_database.dart';
 import '../requests_data/request_model.dart';
 import '../users_data/user_model.dart';
 import '../sign_in_page.dart';
+import 'WorkRequestDetailsPage.dart'; // Details page import
 
 class WorkerHomePage extends StatefulWidget {
   final User? user;
@@ -22,11 +23,11 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
   final Set<String> _submittedOffers = {};
   final Set<String> _myJobs = {};
 
-  static const List<Map<String, String>> _serviceCategories =[
-    {'label': 'Carpenter',    'image': 'assets/carpenter.jpg'},
-    {'label': 'Welding',      'image': 'assets/welding.jpg'},
-    {'label': 'Plumber',      'image': 'assets/plumber.jpg'},
-    {'label': 'Electrician',  'image': 'assets/electrician.jpg'},
+  static const List<Map<String, String>> _serviceCategories = [
+    {'label': 'Carpenter', 'image': 'assets/carpenter.jpg'},
+    {'label': 'Welding', 'image': 'assets/welding.jpg'},
+    {'label': 'Plumber', 'image': 'assets/plumber.jpg'},
+    {'label': 'Electrician', 'image': 'assets/electrician.jpg'},
   ];
 
   List<Request> get _availableJobs {
@@ -38,23 +39,28 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
 
   List<Request> get _workerJobs {
     return RequestsDatabase.getAllRequests()
-        .where((r) => _myJobs.contains(r.id))
-        .toList()
-      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+        .where((r) => r.status == 'in_progress' && _myJobs.contains(r.id))
+        .toList();
+  }
+
+  List<Request> get _historyJobs {
+    return RequestsDatabase.getAllRequests()
+        .where((r) => r.status == 'completed' || r.status == 'cancelled')
+        .toList();
   }
 
   void _offerSubmission(Request request) {
+    final updated = request.copyWith(status: 'in_progress');
+    RequestsDatabase.updateRequest(updated);
+
     setState(() {
       _myJobs.add(request.id);
-      _submittedOffers.remove(request.id);
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Offer submitted for "${request.title}"!'),
         backgroundColor: const Color(0xFF2D7A5E),
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 2),
       ),
     );
   }
@@ -85,7 +91,7 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
   }
 
   String _dateString(DateTime dt) {
-    const months =[
+    const months = [
       'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
     ];
@@ -107,9 +113,10 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         child: Row(
-          children:[
+          children: [
             Container(
-              width: 48, height: 48,
+              width: 48,
+              height: 48,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: const Color(0xFFE8F5F1),
@@ -120,11 +127,13 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
             const SizedBox(width: 14),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children:[
+              children: [
                 Text(
                   'Hello, $workerName!',
                   style: const TextStyle(
-                    fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -143,7 +152,7 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
   Widget _categoriesRow() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children:[
+      children: [
         const Text(
           'Service Categories',
           style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
@@ -164,15 +173,17 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  clipBehavior: Clip.antiAlias,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children:[
+                    children: [
                       SizedBox(
                         height: 105,
-                        child: Image.asset(
-                          category['image']!,
-                          fit: BoxFit.cover,
+                        child: ClipRRect(
+                          borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                          child: Image.asset(
+                            category['image']!,
+                            fit: BoxFit.cover,
+                          ),
                         ),
                       ),
                       Expanded(
@@ -182,7 +193,9 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
                           padding: const EdgeInsets.symmetric(horizontal: 4),
                           child: Text(
                             category['label']!,
-                            textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
@@ -203,16 +216,33 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
   }
 
   Widget _jobCard(Request request, {bool isMyJob = false}) {
-    final hasImage = request.imagePaths.isNotEmpty;
+  final hasImage = request.imagePaths.isNotEmpty;
 
-    return Card(
-      elevation: 3,
-      margin: const EdgeInsets.only(bottom: 14),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      clipBehavior: Clip.antiAlias,
+  return Card(
+    elevation: 3,
+    margin: const EdgeInsets.only(bottom: 14),
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    clipBehavior: Clip.antiAlias,
+    child: InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: () {
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => WorkRequestDetailsPage(
+        request: request,
+        onAccept: () {
+          setState(() {
+            _myJobs.add(request.id);
+          });
+        },
+      ),
+    ),
+  );
+},
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children:[
+        children: [
           SizedBox(
             width: double.infinity,
             height: 140,
@@ -223,9 +253,8 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
                     child: Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
-                        children:[
-                          Icon(Icons.construction,
-                              size: 40, color: Colors.grey[400]),
+                        children: [
+                          Icon(Icons.construction, size: 40, color: Colors.grey[400]),
                           const SizedBox(height: 6),
                           Text(
                             request.type,
@@ -244,7 +273,7 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
             padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children:[
+              children: [
                 Text(
                   request.title,
                   style: const TextStyle(
@@ -258,31 +287,27 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
                 const SizedBox(height: 6),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children:[
+                  children: [
                     Text(
                       request.userCity ?? 'Nearby',
-                      style:
-                          TextStyle(fontSize: 12, color: Colors.grey[700]),
+                      style: TextStyle(fontSize: 12, color: Colors.grey[700]),
                     ),
                     Text(
                       'PHP ${request.budget}',
-                      style:
-                          TextStyle(fontSize: 12, color: Colors.grey[700]),
+                      style: TextStyle(fontSize: 12, color: Colors.grey[700]),
                     ),
                   ],
                 ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children:[
+                  children: [
                     Text(
                       _dateString(request.createdAt),
-                      style:
-                          TextStyle(fontSize: 12, color: Colors.grey[700]),
+                      style: TextStyle(fontSize: 12, color: Colors.grey[700]),
                     ),
                     Text(
                       _timeString(request.createdAt),
-                      style:
-                          TextStyle(fontSize: 12, color: Colors.grey[700]),
+                      style: TextStyle(fontSize: 12, color: Colors.grey[700]),
                     ),
                   ],
                 ),
@@ -290,8 +315,7 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
                 Center(
                   child: isMyJob
                       ? Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 20, vertical: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                           decoration: BoxDecoration(
                             color: Colors.grey[200],
                             borderRadius: BorderRadius.circular(20),
@@ -306,15 +330,15 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
                             ),
                           ),
                         )
-                      : GestureDetector(
-                          onTap: () => _offerSubmission(request),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 22, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF2D7A5E),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
+                      : Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF2D7A5E),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: GestureDetector(
+                            behavior: HitTestBehavior.translucent,
+                            onTap: () => _offerSubmission(request),
                             child: const Text(
                               'Submit Offer',
                               style: TextStyle(
@@ -331,15 +355,16 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _emptyState(String message) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.only(top: 60),
         child: Column(
-          children:[
+          children: [
             Icon(Icons.work_outline, size: 64, color: Colors.grey[300]),
             const SizedBox(height: 16),
             Text(
@@ -356,7 +381,11 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
   @override
   Widget build(BuildContext context) {
     final workerName = widget.user?.name ?? 'User';
-    final jobs = _selectedTab == 'available' ? _availableJobs : _workerJobs;
+    final jobs = _selectedTab == 'available'
+        ? _availableJobs
+        : _selectedTab == 'myjobs'
+            ? _workerJobs
+            : _historyJobs;
 
     return Scaffold(
       backgroundColor: const Color(0xFFE8F5F1),
@@ -381,14 +410,14 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
             fontSize: 17,
           ),
         ),
-        actions:[
+        actions: [
           Container(
             margin: const EdgeInsets.only(right: 14, top: 10, bottom: 10),
             padding: const EdgeInsets.symmetric(horizontal: 14),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(20),
-              boxShadow:[
+              boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.06),
                   blurRadius: 4,
@@ -410,14 +439,14 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
         ],
       ),
       body: Column(
-        children:[
+        children: [
           Expanded(
             child: SingleChildScrollView(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children:[
+                  children: [
                     const SizedBox(height: 12),
                     _helloCard(workerName),
                     const SizedBox(height: 16),
@@ -429,30 +458,27 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
-                        children:[
+                        children: [
                           Expanded(
                             child: GestureDetector(
-                              onTap: () => setState(
-                                  () => _selectedTab = 'available'),
+                              onTap: () => setState(() => _selectedTab = 'available'),
                               child: AnimatedContainer(
                                 duration: const Duration(milliseconds: 200),
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 10),
+                                padding: const EdgeInsets.symmetric(vertical: 10),
                                 decoration: BoxDecoration(
                                   color: _selectedTab == 'available'
                                       ? Colors.white
                                       : Colors.transparent,
                                   borderRadius: BorderRadius.circular(8),
                                   boxShadow: _selectedTab == 'available'
-                                      ?[
+                                      ? [
                                           BoxShadow(
-                                            color: Colors.black
-                                                .withOpacity(0.08),
+                                            color: Colors.black.withOpacity(0.08),
                                             blurRadius: 4,
                                             offset: const Offset(0, 1),
                                           )
                                         ]
-                                      :[],
+                                      : [],
                                 ),
                                 child: Center(
                                   child: Text(
@@ -471,12 +497,10 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
                           ),
                           Expanded(
                             child: GestureDetector(
-                              onTap: () =>
-                                  setState(() => _selectedTab = 'myjobs'),
+                              onTap: () => setState(() => _selectedTab = 'myjobs'),
                               child: AnimatedContainer(
                                 duration: const Duration(milliseconds: 200),
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 10),
+                                padding: const EdgeInsets.symmetric(vertical: 10),
                                 decoration: BoxDecoration(
                                   color: _selectedTab == 'myjobs'
                                       ? const Color(0xFF3A3A3A)
@@ -524,7 +548,7 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: const Color(0xFF2D7A5E),
-          boxShadow:[
+          boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.12),
               blurRadius: 8,
@@ -553,7 +577,7 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
               setState(() => _selectedNavIndex = 0);
             }
           },
-          items: const[
+          items: const [
             BottomNavigationBarItem(
               icon: Icon(Icons.grid_view_rounded),
               label: 'Dashboard',

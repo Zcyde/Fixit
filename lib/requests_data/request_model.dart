@@ -1,13 +1,3 @@
-
-
-
-
-
-
-
-
-
-
 class Request {
   final String id;
   final String title;
@@ -17,6 +7,7 @@ class Request {
   final String priority;
   final List<String> imagePaths;
   final DateTime createdAt;
+  final String? workerName;
   
   final String userId;
   final String userName;
@@ -49,6 +40,7 @@ class Request {
     this.userBarangay,
     this.userAddress,
     this.status = 'pending',
+    this.workerName,
   });
 
   Request copyWith({
