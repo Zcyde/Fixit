@@ -4,7 +4,7 @@ import '../users_data/user_model.dart';
 
 class ProfilePage extends StatefulWidget {
   final User user;
-  
+
   const ProfilePage({Key? key, required this.user}) : super(key: key);
 
   @override
@@ -12,10 +12,10 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  String _selectedTab = 'profile'; 
+  String _selectedTab = 'profile';
   bool _isEditing = false;
   late bool _wasProfileIncompleteOnLoad;
-  
+
   late TextEditingController _nameController;
   late TextEditingController _contactController;
   late TextEditingController _emailController;
@@ -28,9 +28,9 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   void initState() {
     super.initState();
-    
+
     _wasProfileIncompleteOnLoad = !widget.user.isProfileComplete;
-    
+
     _nameController = TextEditingController(text: widget.user.name);
     _contactController = TextEditingController(text: widget.user.phone);
     _emailController = TextEditingController(text: widget.user.email);
@@ -39,7 +39,7 @@ class _ProfilePageState extends State<ProfilePage> {
     _cityController = TextEditingController(text: widget.user.city ?? '');
     _barangayController = TextEditingController(text: widget.user.barangay ?? '');
     _addressController = TextEditingController(text: widget.user.address ?? '');
-    
+
     if (_wasProfileIncompleteOnLoad) {
       _isEditing = true;
     }
@@ -91,7 +91,7 @@ class _ProfilePageState extends State<ProfilePage> {
         setState(() {
           _isEditing = false;
         });
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Profile updated successfully!'),
@@ -129,14 +129,13 @@ class _ProfilePageState extends State<ProfilePage> {
 
   void _showPasswordVerificationDialog() {
     final passwordController = TextEditingController();
-    
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-            side: const BorderSide(color: Colors.black, width: 2),
+            borderRadius: BorderRadius.circular(12),
           ),
           title: const Text(
             'Verify Password',
@@ -146,7 +145,10 @@ class _ProfilePageState extends State<ProfilePage> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Enter your password to edit your profile:'),
+              Text(
+                'Enter your password to edit your profile:',
+                style: TextStyle(color: Colors.grey[600], fontSize: 14),
+              ),
               const SizedBox(height: 16),
               TextField(
                 controller: passwordController,
@@ -154,42 +156,38 @@ class _ProfilePageState extends State<ProfilePage> {
                 decoration: InputDecoration(
                   hintText: 'Password',
                   filled: true,
-                  fillColor: Colors.white,
+                  fillColor: Colors.grey[200],
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(4),
-                    borderSide: const BorderSide(color: Colors.black, width: 2),
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide.none,
                   ),
                   enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(4),
-                    borderSide: const BorderSide(color: Colors.black, width: 2),
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide.none,
                   ),
                   focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(4),
-                    borderSide: const BorderSide(color: Colors.black, width: 2),
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: Color(0xFF2D7A5E), width: 1.5),
                   ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 ),
               ),
             ],
           ),
           actions: [
-            OutlinedButton(
+            TextButton(
               onPressed: () {
                 passwordController.dispose();
                 Navigator.pop(context);
               },
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.black,
-                side: const BorderSide(color: Colors.black, width: 2),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(4),
-                ),
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.grey[600],
               ),
               child: const Text('Cancel'),
             ),
             ElevatedButton(
               onPressed: () {
                 final enteredPassword = passwordController.text.trim();
-                
                 if (enteredPassword == widget.user.password) {
                   passwordController.dispose();
                   Navigator.pop(context);
@@ -206,13 +204,18 @@ class _ProfilePageState extends State<ProfilePage> {
                 }
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.black,
+                backgroundColor: const Color(0xFF6DBD8E),
                 foregroundColor: Colors.white,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: BorderRadius.circular(8),
                 ),
               ),
-              child: const Text('Verify'),
+              child: const Text(
+                'Verify',
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
             ),
           ],
         );
@@ -230,7 +233,7 @@ class _ProfilePageState extends State<ProfilePage> {
       );
       return;
     }
-    
+
     setState(() {
       _isEditing = false;
       _nameController.text = widget.user.name;
@@ -244,40 +247,53 @@ class _ProfilePageState extends State<ProfilePage> {
     });
   }
 
-  Widget _buildTextField(String label, TextEditingController controller, {bool enabled = false}) {
+  Widget _buildTextField(String label, TextEditingController controller, {bool isRequired = false}) {
+    final isEmpty = controller.text.trim().isEmpty;
+    final showRedTint = isRequired && _wasProfileIncompleteOnLoad && _isEditing && isEmpty;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
           style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: Colors.black87,
           ),
         ),
         const SizedBox(height: 8),
         TextField(
           controller: controller,
-          enabled: _isEditing || enabled,
+          enabled: _isEditing,
+          style: const TextStyle(fontSize: 14, color: Colors.black87),
+          onChanged: (_) => setState(() {}),
           decoration: InputDecoration(
+            hintText: showRedTint ? '*' : null,
+            hintStyle: const TextStyle(color: Colors.red, fontSize: 14),
             filled: true,
-            fillColor: _isEditing ? Colors.white : Colors.grey[200],
+            fillColor: showRedTint
+                ? Colors.red.withOpacity(0.08)
+                : _isEditing
+                    ? Colors.grey[200]
+                    : Colors.grey[100],
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(4),
-              borderSide: BorderSide(color: Colors.grey[400]!, width: 1),
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide.none,
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(4),
-              borderSide: BorderSide(color: _isEditing ? Colors.black : Colors.grey[400]!, width: _isEditing ? 2 : 1),
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide.none,
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(4),
-              borderSide: const BorderSide(color: Colors.black, width: 2),
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Color(0xFF2D7A5E), width: 1.5),
             ),
             disabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(4),
-              borderSide: BorderSide(color: Colors.grey[400]!, width: 1),
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide.none,
             ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           ),
         ),
       ],
@@ -289,7 +305,6 @@ class _ProfilePageState extends State<ProfilePage> {
     return WillPopScope(
       onWillPop: () async {
         final currentUser = UsersDatabase.getUserById(widget.user.id);
-        
         if (currentUser != null && !currentUser.isProfileComplete) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -310,7 +325,6 @@ class _ProfilePageState extends State<ProfilePage> {
             icon: const Icon(Icons.arrow_back, color: Colors.black),
             onPressed: () {
               final currentUser = UsersDatabase.getUserById(widget.user.id);
-              
               if (currentUser != null && !currentUser.isProfileComplete) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
@@ -346,10 +360,7 @@ class _ProfilePageState extends State<ProfilePage> {
           ],
           bottom: PreferredSize(
             preferredSize: const Size.fromHeight(1),
-            child: Container(
-              color: Colors.grey[300],
-              height: 1,
-            ),
+            child: Container(color: Colors.grey[300], height: 1),
           ),
         ),
         body: SingleChildScrollView(
@@ -365,48 +376,43 @@ class _ProfilePageState extends State<ProfilePage> {
                     color: Colors.grey[300],
                     border: Border.all(color: Colors.grey[400]!, width: 2),
                   ),
-                  child: Icon(
-                    Icons.person,
-                    size: 50,
-                    color: Colors.grey[600],
-                  ),
+                  child: Icon(Icons.person, size: 50, color: Colors.grey[600]),
                 ),
                 const SizedBox(height: 16),
-                
                 Text(
                   widget.user.name,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 24),
-                
+
                 Row(
                   children: [
                     Expanded(
                       child: GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _selectedTab = 'profile';
-                          });
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        onTap: () => setState(() => _selectedTab = 'profile'),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          padding: const EdgeInsets.symmetric(vertical: 10),
                           decoration: BoxDecoration(
-                            color: _selectedTab == 'profile' ? const Color(0xFF2D7A5E) : Colors.white,
+                            color: _selectedTab == 'profile'
+                                ? const Color(0xFF2D7A5E)
+                                : Colors.white,
+                            borderRadius: BorderRadius.circular(7),
                             border: Border.all(
-                              color: _selectedTab == 'profile' ? const Color(0xFF2D7A5E) : Colors.grey[300]!,
-                              width: 1,
+                              color: _selectedTab == 'profile'
+                                  ? const Color(0xFF2D7A5E)
+                                  : Colors.grey[300]!,
                             ),
-                            borderRadius: BorderRadius.circular(8),
                           ),
                           child: Center(
                             child: Text(
                               'Profile',
                               style: TextStyle(
-                                color: _selectedTab == 'profile' ? Colors.white : Colors.black,
+                                color: _selectedTab == 'profile'
+                                    ? Colors.white
+                                    : Colors.grey[600],
                                 fontWeight: FontWeight.w600,
+                                fontSize: 14,
                               ),
                             ),
                           ),
@@ -416,27 +422,30 @@ class _ProfilePageState extends State<ProfilePage> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _selectedTab = 'history';
-                          });
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        onTap: () => setState(() => _selectedTab = 'history'),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          padding: const EdgeInsets.symmetric(vertical: 10),
                           decoration: BoxDecoration(
-                            color: _selectedTab == 'history' ? const Color(0xFF2D7A5E) : Colors.white,
+                            color: _selectedTab == 'history'
+                                ? const Color(0xFF2D7A5E)
+                                : Colors.white,
+                            borderRadius: BorderRadius.circular(7),
                             border: Border.all(
-                              color: _selectedTab == 'history' ? const Color(0xFF2D7A5E) : Colors.grey[300]!,
-                              width: 1,
+                              color: _selectedTab == 'history'
+                                  ? const Color(0xFF2D7A5E)
+                                  : Colors.grey[300]!,
                             ),
-                            borderRadius: BorderRadius.circular(8),
                           ),
                           child: Center(
                             child: Text(
                               'History',
                               style: TextStyle(
-                                color: _selectedTab == 'history' ? Colors.white : Colors.black,
+                                color: _selectedTab == 'history'
+                                    ? Colors.white
+                                    : Colors.grey[600],
                                 fontWeight: FontWeight.w600,
+                                fontSize: 14,
                               ),
                             ),
                           ),
@@ -446,7 +455,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   ],
                 ),
                 const SizedBox(height: 24),
-                
+
                 if (_selectedTab == 'profile') ...[
                   _buildTextField('Name', _nameController),
                   const SizedBox(height: 16),
@@ -454,36 +463,28 @@ class _ProfilePageState extends State<ProfilePage> {
                   const SizedBox(height: 16),
                   _buildTextField('Email', _emailController),
                   const SizedBox(height: 16),
-                  
+
                   Row(
                     children: [
-                      Expanded(
-                        child: _buildTextField('Gender', _genderController),
-                      ),
+                      Expanded(child: _buildTextField('Gender', _genderController, isRequired: true)),
                       const SizedBox(width: 12),
-                      Expanded(
-                        child: _buildTextField('Birthdate', _birthdateController),
-                      ),
+                      Expanded(child: _buildTextField('Birthdate', _birthdateController, isRequired: true)),
                     ],
                   ),
                   const SizedBox(height: 16),
-                  
+
                   Row(
                     children: [
-                      Expanded(
-                        child: _buildTextField('City', _cityController),
-                      ),
+                      Expanded(child: _buildTextField('City', _cityController, isRequired: true)),
                       const SizedBox(width: 12),
-                      Expanded(
-                        child: _buildTextField('Barangay', _barangayController),
-                      ),
+                      Expanded(child: _buildTextField('Barangay', _barangayController, isRequired: true)),
                     ],
                   ),
                   const SizedBox(height: 16),
-                  
-                  _buildTextField('Address', _addressController),
-                  const SizedBox(height: 24),
-                  
+
+                  _buildTextField('Address', _addressController, isRequired: true),
+                  const SizedBox(height: 28),
+
                   if (_isEditing) ...[
                     if (_wasProfileIncompleteOnLoad) ...[
                       SizedBox(
@@ -491,19 +492,17 @@ class _ProfilePageState extends State<ProfilePage> {
                         child: ElevatedButton(
                           onPressed: _handleEditProfile,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF2D7A5E),
+                            backgroundColor: const Color(0xFF6DBD8E),
                             foregroundColor: Colors.white,
+                            elevation: 0,
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
                             ),
                           ),
                           child: const Text(
-                            'SAVE',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
+                            'Save',
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
                           ),
                         ),
                       ),
@@ -511,22 +510,19 @@ class _ProfilePageState extends State<ProfilePage> {
                       Row(
                         children: [
                           Expanded(
-                            child: OutlinedButton(
+                            child: TextButton(
                               onPressed: _cancelEdit,
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: Colors.black,
-                                side: BorderSide(color: Colors.grey[300]!, width: 1),
+                              style: TextButton.styleFrom(
+                                foregroundColor: Colors.grey[700],
                                 padding: const EdgeInsets.symmetric(vertical: 16),
+                                backgroundColor: Colors.grey[200],
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                               ),
                               child: const Text(
-                                'CANCEL',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                ),
+                                'Cancel',
+                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
                               ),
                             ),
                           ),
@@ -535,19 +531,17 @@ class _ProfilePageState extends State<ProfilePage> {
                             child: ElevatedButton(
                               onPressed: _handleEditProfile,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF2D7A5E),
+                                backgroundColor: const Color(0xFF6DBD8E),
                                 foregroundColor: Colors.white,
+                                elevation: 0,
                                 padding: const EdgeInsets.symmetric(vertical: 16),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                               ),
                               child: const Text(
-                                'SAVE',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                ),
+                                'Save',
+                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
                               ),
                             ),
                           ),
@@ -560,19 +554,17 @@ class _ProfilePageState extends State<ProfilePage> {
                       child: ElevatedButton(
                         onPressed: _handleEditProfile,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF2D7A5E),
+                          backgroundColor: const Color(0xFF6DBD8E),
                           foregroundColor: Colors.white,
+                          elevation: 0,
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),
                         ),
                         child: const Text(
-                          'EDIT PROFILE',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
+                          'Edit Profile',
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
                         ),
                       ),
                     ),
@@ -583,15 +575,13 @@ class _ProfilePageState extends State<ProfilePage> {
                     child: Center(
                       child: Text(
                         'History coming soon!',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.grey[600],
-                        ),
+                        style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                       ),
                     ),
                   ),
                 ],
-                const SizedBox(height: 80), 
+
+                const SizedBox(height: 80),
               ],
             ),
           ),
@@ -616,27 +606,13 @@ class _ProfilePageState extends State<ProfilePage> {
             unselectedFontSize: 12,
             currentIndex: 3,
             onTap: (index) {
-              if (index != 3) {
-                Navigator.pop(context);
-              }
+              if (index != 3) Navigator.pop(context);
             },
             items: const [
-              BottomNavigationBarItem(
-                icon: Icon(Icons.home),
-                label: 'Home',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.assignment),
-                label: 'Requests',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.inbox),
-                label: 'Inbox',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.person),
-                label: 'Profile',
-              ),
+              BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+              BottomNavigationBarItem(icon: Icon(Icons.assignment), label: 'Requests'),
+              BottomNavigationBarItem(icon: Icon(Icons.inbox), label: 'Inbox'),
+              BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
             ],
           ),
         ),
