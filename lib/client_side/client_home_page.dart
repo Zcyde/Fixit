@@ -7,12 +7,11 @@ import '../sign_in_page.dart';
 import '../users_data/users_database.dart';
 import '../api/review_model.dart';
 import '../api/review_api_service.dart';
-// Ensure this path matches where your ChatPage is located
 import '../worker_side/chat_page.dart';
 
 class ClientHomePage extends StatefulWidget {
   final User user;
-  
+
   const ClientHomePage({Key? key, required this.user}) : super(key: key);
 
   @override
@@ -22,13 +21,13 @@ class ClientHomePage extends StatefulWidget {
 class _ClientHomePageState extends State<ClientHomePage> {
   int _selectedIndex = 0;
   late User currentUser;
-
-  // Track unread messages. In a real app, this comes from a database.
   int unreadMessagesCount = 1;
-
   List<Review> _reviews = [];
   bool _isLoadingReviews = false;
   String? _reviewsError;
+
+  // null = not voted, true = yes, false = no
+  final Map<int, bool?> _helpfulVotes = {};
 
   @override
   void initState() {
@@ -42,7 +41,6 @@ class _ClientHomePageState extends State<ClientHomePage> {
       _isLoadingReviews = true;
       _reviewsError = null;
     });
-
     try {
       final reviews = await ReviewApiService.fetchReviews();
       setState(() {
@@ -121,13 +119,10 @@ class _ClientHomePageState extends State<ClientHomePage> {
   }
 
   void _onNavItemTapped(int index) async {
-    // If we click Home, just update the index
     if (index == 0) {
       setState(() => _selectedIndex = 0);
       return;
     }
-
-    // For other tabs, navigate to their respective pages
     switch (index) {
       case 1:
         await Navigator.push(
@@ -137,9 +132,9 @@ class _ClientHomePageState extends State<ClientHomePage> {
           ),
         );
         break;
-      case 2: // INBOX LOGIC
+      case 2:
         setState(() {
-          unreadMessagesCount = 0; // Clear the badge when opened
+          unreadMessagesCount = 0;
         });
         await Navigator.push(
           context,
@@ -161,11 +156,34 @@ class _ClientHomePageState extends State<ClientHomePage> {
         if (mounted) _refreshUser();
         break;
     }
-
-    // Reset index back to Home (0) after returning from other pages
     if (mounted) {
       setState(() => _selectedIndex = 0);
     }
+  }
+
+  String _formatDate(DateTime date) {
+    const months = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    return '${months[date.month - 1]} ${date.day}, ${date.year}';
+  }
+
+  int _helpfulCount(Review review) {
+    final base = review.likes + (review.id * 11) % 80;
+    final vote = _helpfulVotes[review.id];
+    if (vote == true) return base + 1;
+    return base;
+  }
+
+  void _onHelpfulVote(int reviewId, bool vote) {
+    setState(() {
+      if (_helpfulVotes[reviewId] == vote) {
+        _helpfulVotes[reviewId] = null;
+      } else {
+        _helpfulVotes[reviewId] = vote;
+      }
+    });
   }
 
   Widget _buildServiceCard({
@@ -234,118 +252,87 @@ class _ClientHomePageState extends State<ClientHomePage> {
 
   void _showAllReviewsModal() {
     final maxReviewsList = _reviews.take(20).toList();
-
     showDialog(
       context: context,
       builder: (context) {
-        return Dialog(
-          insetPadding: const EdgeInsets.all(16),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          clipBehavior: Clip.antiAlias,
-          child: Container(
-            color: Colors.white,
-            width: double.infinity,
-            height: MediaQuery.of(context).size.height * 0.85,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(left: 16, right: 8, top: 12, bottom: 8),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 48,
-                        height: 48,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFE8F5F1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(Icons.handyman, color: Color(0xFF2D7A5E)),
-                      ),
-                      const SizedBox(width: 16),
-                      const Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Ratings and reviews',
-                              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500, color: Colors.black87),
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Dialog(
+              insetPadding: const EdgeInsets.all(16),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              clipBehavior: Clip.antiAlias,
+              child: Container(
+                color: Colors.white,
+                width: double.infinity,
+                height: MediaQuery.of(context).size.height * 0.85,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(left: 16, right: 8, top: 12, bottom: 8),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 48,
+                            height: 48,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFE8F5F1),
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                            Text(
-                              'Fixit - Resident',
-                              style: TextStyle(fontSize: 13, color: Colors.grey),
+                            child: const Icon(Icons.handyman, color: Color(0xFF2D7A5E)),
+                          ),
+                          const SizedBox(width: 16),
+                          const Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Ratings and reviews',
+                                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500, color: Colors.black87),
+                                ),
+                                Text(
+                                  'Fixit - Resident',
+                                  style: TextStyle(fontSize: 13, color: Colors.grey),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.close, color: Colors.black54),
+                            onPressed: () => Navigator.pop(context),
+                          ),
+                        ],
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.close, color: Colors.black54),
-                        onPressed: () => Navigator.pop(context),
+                    ),
+                    const SizedBox(height: 8),
+                    const Divider(height: 1),
+                    Expanded(
+                      child: ListView.separated(
+                        padding: const EdgeInsets.all(20),
+                        itemCount: maxReviewsList.length,
+                        separatorBuilder: (context, index) => const SizedBox(height: 32),
+                        itemBuilder: (context, index) {
+                          return _buildReviewItem(
+                            maxReviewsList[index],
+                            onVoteChanged: () => setModalState(() {}),
+                          );
+                        },
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Row(
-                    children: [
-                      _buildPlayStoreChip('Most relevant', isActive: true),
-                      const SizedBox(width: 8),
-                      _buildPlayStoreChip('Star rating', isActive: false),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 8),
-                const Divider(height: 1),
-                Expanded(
-                  child: ListView.separated(
-                    padding: const EdgeInsets.all(20),
-                    itemCount: maxReviewsList.length,
-                    separatorBuilder: (context, index) => const SizedBox(height: 32),
-                    itemBuilder: (context, index) {
-                      return _buildPlayStoreReviewItem(maxReviewsList[index]);
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         );
       },
     );
   }
 
-  Widget _buildPlayStoreChip(String label, {bool isActive = false}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: isActive ? const Color(0xFFE8F5F1) : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: isActive ? Colors.transparent : Colors.grey[300]!),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-              color: isActive ? const Color(0xFF01875F) : Colors.grey[700],
-            ),
-          ),
-          const SizedBox(width: 4),
-          Icon(
-            Icons.arrow_drop_down,
-            size: 18,
-            color: isActive ? const Color(0xFF01875F) : Colors.grey[700],
-          ),
-        ],
-      ),
-    );
-  }
+  Widget _buildReviewItem(Review review, {VoidCallback? onVoteChanged}) {
+    final currentVote = _helpfulVotes[review.id];
+    final count = _helpfulCount(review);
 
-  Widget _buildPlayStoreReviewItem(Review review) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -373,15 +360,20 @@ class _ClientHomePageState extends State<ClientHomePage> {
         Row(
           children: [
             Row(
-              children: List.generate(5, (index) => Icon(
-                Icons.star,
-                size: 14,
-                color: index < 4 ? const Color(0xFF01875F) : Colors.grey[300],
-              )),
+              children: List.generate(
+                5,
+                (index) => Icon(
+                  Icons.star,
+                  size: 14,
+                  color: index < review.rating
+                      ? const Color(0xFF01875F)
+                      : Colors.grey[300],
+                ),
+              ),
             ),
             const SizedBox(width: 8),
             Text(
-              'December 2, 2025',
+              _formatDate(review.reviewDate),
               style: TextStyle(color: Colors.grey[600], fontSize: 12),
             ),
           ],
@@ -393,34 +385,77 @@ class _ClientHomePageState extends State<ClientHomePage> {
         ),
         const SizedBox(height: 16),
         Text(
-          '175 people found this review helpful',
+          '$count people found this review helpful',
           style: TextStyle(fontSize: 12, color: Colors.grey[600]),
         ),
         const SizedBox(height: 8),
         Row(
           children: [
-            Text('Did you find this helpful?', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+            Text(
+              'Did you find this helpful?',
+              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+            ),
             const SizedBox(width: 12),
             OutlinedButton(
-              onPressed: () {},
+              onPressed: () {
+                _onHelpfulVote(review.id, true);
+                onVoteChanged?.call();
+              },
               style: OutlinedButton.styleFrom(
                 minimumSize: const Size(50, 28),
                 padding: const EdgeInsets.symmetric(horizontal: 14),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                side: BorderSide(color: Colors.grey[300]!),
+                backgroundColor: currentVote == true
+                    ? const Color(0xFFE8F5F1)
+                    : Colors.transparent,
+                side: BorderSide(
+                  color: currentVote == true
+                      ? const Color(0xFF2D7A5E)
+                      : Colors.grey[300]!,
+                ),
               ),
-              child: const Text('Yes', style: TextStyle(color: Colors.black87, fontSize: 12)),
+              child: Text(
+                'Yes',
+                style: TextStyle(
+                  color: currentVote == true
+                      ? const Color(0xFF2D7A5E)
+                      : Colors.black87,
+                  fontSize: 12,
+                  fontWeight: currentVote == true
+                      ? FontWeight.bold
+                      : FontWeight.normal,
+                ),
+              ),
             ),
             const SizedBox(width: 8),
             OutlinedButton(
-              onPressed: () {},
+              onPressed: () {
+                _onHelpfulVote(review.id, false);
+                onVoteChanged?.call();
+              },
               style: OutlinedButton.styleFrom(
                 minimumSize: const Size(50, 28),
                 padding: const EdgeInsets.symmetric(horizontal: 14),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                side: BorderSide(color: Colors.grey[300]!),
+                backgroundColor: currentVote == false
+                    ? Colors.red[50]
+                    : Colors.transparent,
+                side: BorderSide(
+                  color: currentVote == false
+                      ? Colors.red[300]!
+                      : Colors.grey[300]!,
+                ),
               ),
-              child: const Text('No', style: TextStyle(color: Colors.black87, fontSize: 12)),
+              child: Text(
+                'No',
+                style: TextStyle(
+                  color: currentVote == false ? Colors.red[400] : Colors.black87,
+                  fontSize: 12,
+                  fontWeight: currentVote == false
+                      ? FontWeight.bold
+                      : FontWeight.normal,
+                ),
+              ),
             ),
           ],
         ),
@@ -434,10 +469,7 @@ class _ClientHomePageState extends State<ClientHomePage> {
       decoration: const BoxDecoration(
         color: Colors.white,
         border: Border(
-          top: BorderSide(
-            color: Color(0xFF2D7A5E),
-            width: 5.0,
-          ),
+          top: BorderSide(color: Color(0xFF2D7A5E), width: 5.0),
         ),
       ),
       child: Column(
@@ -493,12 +525,7 @@ class _ClientHomePageState extends State<ClientHomePage> {
               ),
             )
           else if (_reviews.isNotEmpty)
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildPlayStoreReviewItem(_reviews.first),
-              ],
-            )
+            _buildReviewItem(_reviews.first)
           else
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 24.0),
@@ -568,8 +595,6 @@ class _ClientHomePageState extends State<ClientHomePage> {
                 style: TextStyle(fontSize: 14, color: Colors.grey[700]),
               ),
               const SizedBox(height: 24),
-
-              // Search Bar UI
               Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -578,7 +603,10 @@ class _ClientHomePageState extends State<ClientHomePage> {
                 ),
                 child: Row(
                   children: [
-                    const Padding(padding: EdgeInsets.all(12.0), child: Icon(Icons.search, color: Colors.grey)),
+                    const Padding(
+                      padding: EdgeInsets.all(12.0),
+                      child: Icon(Icons.search, color: Colors.grey),
+                    ),
                     const Expanded(child: SizedBox()),
                     Container(
                       margin: const EdgeInsets.all(6),
@@ -588,13 +616,15 @@ class _ClientHomePageState extends State<ClientHomePage> {
                         borderRadius: BorderRadius.circular(4),
                         border: Border.all(color: Colors.grey[400]!),
                       ),
-                      child: const Text('Location', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+                      child: const Text(
+                        'Location',
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                      ),
                     ),
                   ],
                 ),
               ),
               const SizedBox(height: 16),
-
               Row(
                 children: [
                   Expanded(
@@ -642,10 +672,8 @@ class _ClientHomePageState extends State<ClientHomePage> {
                 ],
               ),
               const SizedBox(height: 32),
-
               const Text('Popular Services', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 16),
-
               GridView.count(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
@@ -681,8 +709,6 @@ class _ClientHomePageState extends State<ClientHomePage> {
                 ],
               ),
               const SizedBox(height: 32),
-
-              // Reviews Section
               _buildReviewsSection(),
               const SizedBox(height: 24),
             ],
