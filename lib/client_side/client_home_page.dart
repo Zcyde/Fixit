@@ -26,7 +26,6 @@ class _ClientHomePageState extends State<ClientHomePage> {
   bool _isLoadingReviews = false;
   String? _reviewsError;
 
-  // null = not voted, true = yes, false = no
   final Map<int, bool?> _helpfulVotes = {};
 
   @override
@@ -79,8 +78,7 @@ class _ClientHomePageState extends State<ClientHomePage> {
       builder: (BuildContext context) {
         return AlertDialog(
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-            side: const BorderSide(color: Colors.black, width: 2),
+            borderRadius: BorderRadius.circular(12),
           ),
           title: const Text(
             'Action Restricted',
@@ -92,7 +90,18 @@ class _ClientHomePageState extends State<ClientHomePage> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Later', style: TextStyle(color: Colors.grey)),
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.grey[700],
+                backgroundColor: Colors.grey[200],
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text(
+                'Later',
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
             ),
             ElevatedButton(
               onPressed: () async {
@@ -106,11 +115,19 @@ class _ClientHomePageState extends State<ClientHomePage> {
                 if (mounted) _refreshUser();
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.black,
+                backgroundColor: const Color(0xFF6DBD8E),
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
-              child: const Text('Complete Profile'),
+              child: const Text(
+                'Complete Profile',
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
             ),
           ],
         );
@@ -186,7 +203,7 @@ class _ClientHomePageState extends State<ClientHomePage> {
     });
   }
 
-  Widget _buildServiceCard({
+  Widget _serviceCard({
     required String title,
     required String subtitle,
     required String imagePath,
@@ -312,7 +329,7 @@ class _ClientHomePageState extends State<ClientHomePage> {
                         itemCount: maxReviewsList.length,
                         separatorBuilder: (context, index) => const SizedBox(height: 32),
                         itemBuilder: (context, index) {
-                          return _buildReviewItem(
+                          return _reviewItem(
                             maxReviewsList[index],
                             onVoteChanged: () => setModalState(() {}),
                           );
@@ -329,7 +346,7 @@ class _ClientHomePageState extends State<ClientHomePage> {
     );
   }
 
-  Widget _buildReviewItem(Review review, {VoidCallback? onVoteChanged}) {
+  Widget _reviewItem(Review review, {VoidCallback? onVoteChanged}) {
     final currentVote = _helpfulVotes[review.id];
     final count = _helpfulCount(review);
 
@@ -463,7 +480,7 @@ class _ClientHomePageState extends State<ClientHomePage> {
     );
   }
 
-  Widget _buildReviewsSection() {
+  Widget _reviewsSection() {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: const BoxDecoration(
@@ -525,7 +542,7 @@ class _ClientHomePageState extends State<ClientHomePage> {
               ),
             )
           else if (_reviews.isNotEmpty)
-            _buildReviewItem(_reviews.first)
+            _reviewItem(_reviews.first)
           else
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 24.0),
@@ -682,25 +699,25 @@ class _ClientHomePageState extends State<ClientHomePage> {
                 crossAxisSpacing: 12,
                 childAspectRatio: 0.80,
                 children: [
-                  _buildServiceCard(
+                  _serviceCard(
                     title: 'Carpenter',
                     subtitle: 'Repairing, building, or installing doors and cabinets.',
                     imagePath: 'assets/carpenter.jpg',
                     serviceType: 'Carpentry',
                   ),
-                  _buildServiceCard(
+                  _serviceCard(
                     title: 'Welding',
                     subtitle: 'Skilled professionals for gates, fences, and metal work.',
                     imagePath: 'assets/welding.jpg',
                     serviceType: 'Welding',
                   ),
-                  _buildServiceCard(
+                  _serviceCard(
                     title: 'Plumber',
                     subtitle: 'Resolve broken pipes, leaky faucets, and water systems.',
                     imagePath: 'assets/plumber.jpg',
                     serviceType: 'Plumbing',
                   ),
-                  _buildServiceCard(
+                  _serviceCard(
                     title: 'Electrician',
                     subtitle: 'Safe repairs for wiring, switches, and outlets.',
                     imagePath: 'assets/electrician.jpg',
@@ -709,7 +726,7 @@ class _ClientHomePageState extends State<ClientHomePage> {
                 ],
               ),
               const SizedBox(height: 32),
-              _buildReviewsSection(),
+              _reviewsSection(),
               const SizedBox(height: 24),
             ],
           ),
