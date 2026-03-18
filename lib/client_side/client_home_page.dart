@@ -41,12 +41,16 @@ class _ClientHomePageState extends State<ClientHomePage> {
       _reviewsError = null;
     });
     try {
-      final reviews = await ReviewApiService.fetchReviews();
+      final results = await Future.wait([
+        ReviewApiService.fetchReviews(),
+        Future.delayed(const Duration(seconds: 3))
+      ]);
       setState(() {
-        _reviews = reviews;
+        _reviews = results[0] as List<Review>;
         _isLoadingReviews = false;
       });
     } catch (e) {
+      await Future.delayed(const Duration(seconds: 3));
       setState(() {
         _reviewsError = e.toString();
         _isLoadingReviews = false;
@@ -57,9 +61,7 @@ class _ClientHomePageState extends State<ClientHomePage> {
   void _refreshUser() {
     final updatedUser = UsersDatabase.getUserById(currentUser.id);
     if (updatedUser != null) {
-      setState(() {
-        currentUser = updatedUser;
-      });
+      setState(() { currentUser = updatedUser; });
     }
   }
 
@@ -78,14 +80,14 @@ class _ClientHomePageState extends State<ClientHomePage> {
       builder: (BuildContext context) {
         return AlertDialog(
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(12)
           ),
           title: const Text(
             'Action Restricted',
-            style: TextStyle(fontWeight: FontWeight.bold),
+            style: TextStyle(fontWeight: FontWeight.bold)
           ),
           content: const Text(
-            'You need to complete your profile before you can create a request.',
+            'You need to complete your profile before you can create a request.'
           ),
           actions: [
             TextButton(
@@ -94,23 +96,16 @@ class _ClientHomePageState extends State<ClientHomePage> {
                 foregroundColor: Colors.grey[700],
                 backgroundColor: Colors.grey[200],
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))
               ),
-              child: const Text(
-                'Later',
-                style: TextStyle(fontWeight: FontWeight.w700),
-              ),
+              child: const Text('Later', style: TextStyle(fontWeight: FontWeight.w700))
             ),
             ElevatedButton(
               onPressed: () async {
                 Navigator.pop(context);
                 await Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (context) => ProfilePage(user: currentUser),
-                  ),
+                  MaterialPageRoute(builder: (context) => ProfilePage(user: currentUser))
                 );
                 if (mounted) _refreshUser();
               },
@@ -119,15 +114,13 @@ class _ClientHomePageState extends State<ClientHomePage> {
                 foregroundColor: Colors.white,
                 elevation: 0,
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))
               ),
               child: const Text(
                 'Complete Profile',
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(fontWeight: FontWeight.w700),
-              ),
+                style: TextStyle(fontWeight: FontWeight.w700)
+              )
             ),
           ],
         );
@@ -142,34 +135,19 @@ class _ClientHomePageState extends State<ClientHomePage> {
     }
     switch (index) {
       case 1:
-        await Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ClientRequestsPage(user: currentUser),
-          ),
-        );
+        await Navigator.push(context, MaterialPageRoute(builder: (context) => ClientRequestsPage(user: currentUser)));
         break;
       case 2:
-        setState(() {
-          unreadMessagesCount = 0;
-        });
+        setState(() { unreadMessagesCount = 0; });
         await Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => const ChatPage(
-              initialMessage: '',
-              workerName: 'Worker Support',
-            ),
-          ),
+            builder: (context) => const ChatPage(initialMessage: '', workerName: 'Worker Support')
+          )
         );
         break;
       case 3:
-        await Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ProfilePage(user: currentUser),
-          ),
-        );
+        await Navigator.push(context, MaterialPageRoute(builder: (context) => ProfilePage(user: currentUser)));
         if (mounted) _refreshUser();
         break;
     }
@@ -214,12 +192,7 @@ class _ClientHomePageState extends State<ClientHomePage> {
         if (_checkProfileAndProceed()) {
           Navigator.push(
             context,
-            MaterialPageRoute(
-              builder: (_) => ClientRequestEditPage(
-                user: currentUser,
-                serviceType: serviceType,
-              ),
-            ),
+            MaterialPageRoute(builder: (_) => ClientRequestEditPage(user: currentUser, serviceType: serviceType))
           );
         }
       },
@@ -229,7 +202,7 @@ class _ClientHomePageState extends State<ClientHomePage> {
         color: Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
-          side: BorderSide(color: Colors.grey[300]!, width: 1),
+          side: BorderSide(color: Colors.grey[300]!, width: 1)
         ),
         clipBehavior: Clip.antiAlias,
         child: Column(
@@ -238,28 +211,18 @@ class _ClientHomePageState extends State<ClientHomePage> {
             SizedBox(
               height: 120,
               width: double.infinity,
-              child: Image.asset(imagePath, fit: BoxFit.cover),
+              child: Image.asset(imagePath, fit: BoxFit.cover)
             ),
             Padding(
               padding: const EdgeInsets.all(12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
+                  Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 4),
-                  Text(
-                    subtitle,
-                    maxLines: 5,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                  ),
+                  Text(subtitle, maxLines: 5, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 12, color: Colors.grey[600]))
                 ],
-              ),
+              )
             ),
           ],
         ),
@@ -294,32 +257,26 @@ class _ClientHomePageState extends State<ClientHomePage> {
                             height: 48,
                             decoration: BoxDecoration(
                               color: const Color(0xFFE8F5F1),
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(12)
                             ),
-                            child: const Icon(Icons.handyman, color: Color(0xFF2D7A5E)),
+                            child: const Icon(Icons.handyman, color: Color(0xFF2D7A5E))
                           ),
                           const SizedBox(width: 16),
                           const Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  'Ratings and reviews',
-                                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500, color: Colors.black87),
-                                ),
-                                Text(
-                                  'Fixit - Resident',
-                                  style: TextStyle(fontSize: 13, color: Colors.grey),
-                                ),
+                                Text('Ratings and reviews', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500, color: Colors.black87)),
+                                Text('Fixit - Resident', style: TextStyle(fontSize: 13, color: Colors.grey))
                               ],
-                            ),
+                            )
                           ),
                           IconButton(
                             icon: const Icon(Icons.close, color: Colors.black54),
-                            onPressed: () => Navigator.pop(context),
+                            onPressed: () => Navigator.pop(context)
                           ),
                         ],
-                      ),
+                      )
                     ),
                     const SizedBox(height: 8),
                     const Divider(height: 1),
@@ -329,12 +286,9 @@ class _ClientHomePageState extends State<ClientHomePage> {
                         itemCount: maxReviewsList.length,
                         separatorBuilder: (context, index) => const SizedBox(height: 32),
                         itemBuilder: (context, index) {
-                          return _reviewItem(
-                            maxReviewsList[index],
-                            onVoteChanged: () => setModalState(() {}),
-                          );
-                        },
-                      ),
+                          return _reviewItem(maxReviewsList[index], onVoteChanged: () => setModalState(() {}));
+                        }
+                      )
                     ),
                   ],
                 ),
@@ -360,16 +314,11 @@ class _ClientHomePageState extends State<ClientHomePage> {
               radius: 16,
               child: Text(
                 review.name.isNotEmpty ? review.name[0].toUpperCase() : '?',
-                style: const TextStyle(color: Colors.white, fontSize: 14),
-              ),
+                style: const TextStyle(color: Colors.white, fontSize: 14)
+              )
             ),
             const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                review.name,
-                style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14, color: Colors.black87),
-              ),
-            ),
+            Expanded(child: Text(review.name, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14, color: Colors.black87))),
             const Icon(Icons.more_vert, size: 20, color: Colors.black54),
           ],
         ),
@@ -379,39 +328,21 @@ class _ClientHomePageState extends State<ClientHomePage> {
             Row(
               children: List.generate(
                 5,
-                (index) => Icon(
-                  Icons.star,
-                  size: 14,
-                  color: index < review.rating
-                      ? const Color(0xFF01875F)
-                      : Colors.grey[300],
-                ),
-              ),
+                (index) => Icon(Icons.star, size: 14, color: index < review.rating ? const Color(0xFF01875F) : Colors.grey[300])
+              )
             ),
             const SizedBox(width: 8),
-            Text(
-              _formatDate(review.reviewDate),
-              style: TextStyle(color: Colors.grey[600], fontSize: 12),
-            ),
+            Text(_formatDate(review.reviewDate), style: TextStyle(color: Colors.grey[600], fontSize: 12)),
           ],
         ),
         const SizedBox(height: 12),
-        Text(
-          review.body,
-          style: const TextStyle(fontSize: 14, color: Colors.black87, height: 1.4),
-        ),
+        Text(review.body, style: const TextStyle(fontSize: 14, color: Colors.black87, height: 1.4)),
         const SizedBox(height: 16),
-        Text(
-          '$count people found this review helpful',
-          style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-        ),
+        Text('$count people found this review helpful', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
         const SizedBox(height: 8),
         Row(
           children: [
-            Text(
-              'Did you find this helpful?',
-              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-            ),
+            Text('Did you find this helpful?', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
             const SizedBox(width: 12),
             OutlinedButton(
               onPressed: () {
@@ -422,27 +353,17 @@ class _ClientHomePageState extends State<ClientHomePage> {
                 minimumSize: const Size(50, 28),
                 padding: const EdgeInsets.symmetric(horizontal: 14),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                backgroundColor: currentVote == true
-                    ? const Color(0xFFE8F5F1)
-                    : Colors.transparent,
-                side: BorderSide(
-                  color: currentVote == true
-                      ? const Color(0xFF2D7A5E)
-                      : Colors.grey[300]!,
-                ),
+                backgroundColor: currentVote == true ? const Color(0xFFE8F5F1) : Colors.transparent,
+                side: BorderSide(color: currentVote == true ? const Color(0xFF2D7A5E) : Colors.grey[300]!)
               ),
               child: Text(
                 'Yes',
                 style: TextStyle(
-                  color: currentVote == true
-                      ? const Color(0xFF2D7A5E)
-                      : Colors.black87,
+                  color: currentVote == true ? const Color(0xFF2D7A5E) : Colors.black87,
                   fontSize: 12,
-                  fontWeight: currentVote == true
-                      ? FontWeight.bold
-                      : FontWeight.normal,
-                ),
-              ),
+                  fontWeight: currentVote == true ? FontWeight.bold : FontWeight.normal
+                )
+              )
             ),
             const SizedBox(width: 8),
             OutlinedButton(
@@ -454,25 +375,17 @@ class _ClientHomePageState extends State<ClientHomePage> {
                 minimumSize: const Size(50, 28),
                 padding: const EdgeInsets.symmetric(horizontal: 14),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                backgroundColor: currentVote == false
-                    ? Colors.red[50]
-                    : Colors.transparent,
-                side: BorderSide(
-                  color: currentVote == false
-                      ? Colors.red[300]!
-                      : Colors.grey[300]!,
-                ),
+                backgroundColor: currentVote == false ? Colors.red[50] : Colors.transparent,
+                side: BorderSide(color: currentVote == false ? Colors.red[300]! : Colors.grey[300]!)
               ),
               child: Text(
                 'No',
                 style: TextStyle(
                   color: currentVote == false ? Colors.red[400] : Colors.black87,
                   fontSize: 12,
-                  fontWeight: currentVote == false
-                      ? FontWeight.bold
-                      : FontWeight.normal,
-                ),
-              ),
+                  fontWeight: currentVote == false ? FontWeight.bold : FontWeight.normal
+                )
+              )
             ),
           ],
         ),
@@ -485,9 +398,7 @@ class _ClientHomePageState extends State<ClientHomePage> {
       padding: const EdgeInsets.all(16),
       decoration: const BoxDecoration(
         color: Colors.white,
-        border: Border(
-          top: BorderSide(color: Color(0xFF2D7A5E), width: 5.0),
-        ),
+        border: Border(top: BorderSide(color: Color(0xFF2D7A5E), width: 5.0))
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -495,13 +406,10 @@ class _ClientHomePageState extends State<ClientHomePage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Ratings and reviews',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
+              const Text('Ratings and reviews', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
               IconButton(
                 icon: const Icon(Icons.arrow_forward),
-                onPressed: _reviews.isNotEmpty ? _showAllReviewsModal : null,
+                onPressed: _reviews.isNotEmpty ? _showAllReviewsModal : null
               ),
             ],
           ),
@@ -511,9 +419,9 @@ class _ClientHomePageState extends State<ClientHomePage> {
               child: Padding(
                 padding: EdgeInsets.all(24.0),
                 child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF01875F)),
-                ),
-              ),
+                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF01875F))
+                )
+              )
             )
           else if (_reviewsError != null)
             Container(
@@ -522,33 +430,23 @@ class _ClientHomePageState extends State<ClientHomePage> {
               decoration: BoxDecoration(
                 color: Colors.red[50],
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.red[300]!),
+                border: Border.all(color: Colors.red[300]!)
               ),
               child: Row(
                 children: [
                   Icon(Icons.error_outline, color: Colors.red[700]),
                   const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'Failed to load reviews. Please retry.',
-                      style: TextStyle(color: Colors.red[700]),
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: _fetchReviews,
-                    child: const Text('Retry'),
-                  ),
+                  Expanded(child: Text('Failed to load reviews. Please retry.', style: TextStyle(color: Colors.red[700]))),
+                  TextButton(onPressed: _fetchReviews, child: const Text('Retry')),
                 ],
-              ),
+              )
             )
           else if (_reviews.isNotEmpty)
             _reviewItem(_reviews.first)
           else
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 24.0),
-              child: Center(
-                child: Text('No reviews available', style: TextStyle(color: Colors.grey)),
-              ),
+              child: Center(child: Text('No reviews available', style: TextStyle(color: Colors.grey)))
             ),
         ],
       ),
@@ -564,22 +462,16 @@ class _ClientHomePageState extends State<ClientHomePage> {
         elevation: 0,
         title: Row(
           children: [
-            const Text(
-              'Fixit',
-              style: TextStyle(color: Colors.black, fontWeight: FontWeight.w600, fontSize: 16),
-            ),
+            const Text('Fixit', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w600, fontSize: 16)),
             const SizedBox(width: 24),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.grey[300]!),
+                border: Border.all(color: Colors.grey[300]!)
               ),
-              child: const Text(
-                'Resident',
-                style: TextStyle(color: Colors.black, fontSize: 14, fontWeight: FontWeight.w500),
-              ),
+              child: const Text('Resident', style: TextStyle(color: Colors.black, fontSize: 14, fontWeight: FontWeight.w500))
             ),
           ],
         ),
@@ -589,10 +481,10 @@ class _ClientHomePageState extends State<ClientHomePage> {
               Navigator.pushAndRemoveUntil(
                 context,
                 MaterialPageRoute(builder: (context) => const SignInPage()),
-                (route) => false,
+                (route) => false
               );
             },
-            child: const Text('Log out', style: TextStyle(color: Colors.black, fontSize: 14)),
+            child: const Text('Log out', style: TextStyle(color: Colors.black, fontSize: 14))
           ),
         ],
       ),
@@ -604,25 +496,22 @@ class _ClientHomePageState extends State<ClientHomePage> {
             children: [
               const Text(
                 'Get help from talented people\nin your area',
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, height: 1.2),
+                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, height: 1.2)
               ),
               const SizedBox(height: 12),
-              Text(
-                'Report repair problems fast and track updates in one place.',
-                style: TextStyle(fontSize: 14, color: Colors.grey[700]),
-              ),
+              Text('Report repair problems fast and track updates in one place.', style: TextStyle(fontSize: 14, color: Colors.grey[700])),
               const SizedBox(height: 24),
               Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.grey[300]!),
+                  border: Border.all(color: Colors.grey[300]!)
                 ),
                 child: Row(
                   children: [
                     const Padding(
                       padding: EdgeInsets.all(12.0),
-                      child: Icon(Icons.search, color: Colors.grey),
+                      child: Icon(Icons.search, color: Colors.grey)
                     ),
                     const Expanded(child: SizedBox()),
                     Container(
@@ -631,12 +520,9 @@ class _ClientHomePageState extends State<ClientHomePage> {
                       decoration: BoxDecoration(
                         color: Colors.grey[200],
                         borderRadius: BorderRadius.circular(4),
-                        border: Border.all(color: Colors.grey[400]!),
+                        border: Border.all(color: Colors.grey[400]!)
                       ),
-                      child: const Text(
-                        'Location',
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
-                      ),
+                      child: const Text('Location', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500))
                     ),
                   ],
                 ),
@@ -648,43 +534,33 @@ class _ClientHomePageState extends State<ClientHomePage> {
                     child: ElevatedButton(
                       onPressed: () {
                         if (_checkProfileAndProceed()) {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => ClientRequestEditPage(user: currentUser),
-                            ),
-                          );
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => ClientRequestEditPage(user: currentUser)));
                         }
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF2D7A5E),
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))
                       ),
-                      child: const Text('Create Request', style: TextStyle(fontWeight: FontWeight.w600)),
-                    ),
+                      child: const Text('Create Request', style: TextStyle(fontWeight: FontWeight.w600))
+                    )
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: OutlinedButton(
                       onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ClientRequestsPage(user: currentUser),
-                          ),
-                        );
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => ClientRequestsPage(user: currentUser)));
                       },
                       style: OutlinedButton.styleFrom(
                         foregroundColor: Colors.black,
                         backgroundColor: Colors.white,
                         side: BorderSide(color: Colors.grey[400]!),
                         padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))
                       ),
-                      child: const Text('My Requests', style: TextStyle(fontWeight: FontWeight.w600)),
-                    ),
+                      child: const Text('My Requests', style: TextStyle(fontWeight: FontWeight.w600))
+                    )
                   ),
                 ],
               ),
@@ -699,30 +575,10 @@ class _ClientHomePageState extends State<ClientHomePage> {
                 crossAxisSpacing: 12,
                 childAspectRatio: 0.80,
                 children: [
-                  _serviceCard(
-                    title: 'Carpenter',
-                    subtitle: 'Repairing, building, or installing doors and cabinets.',
-                    imagePath: 'assets/carpenter.jpg',
-                    serviceType: 'Carpentry',
-                  ),
-                  _serviceCard(
-                    title: 'Welding',
-                    subtitle: 'Skilled professionals for gates, fences, and metal work.',
-                    imagePath: 'assets/welding.jpg',
-                    serviceType: 'Welding',
-                  ),
-                  _serviceCard(
-                    title: 'Plumber',
-                    subtitle: 'Resolve broken pipes, leaky faucets, and water systems.',
-                    imagePath: 'assets/plumber.jpg',
-                    serviceType: 'Plumbing',
-                  ),
-                  _serviceCard(
-                    title: 'Electrician',
-                    subtitle: 'Safe repairs for wiring, switches, and outlets.',
-                    imagePath: 'assets/electrician.jpg',
-                    serviceType: 'Electrical',
-                  ),
+                  _serviceCard(title: 'Carpenter', subtitle: 'Repairing, building, or installing doors and cabinets.', imagePath: 'assets/carpenter.jpg', serviceType: 'Carpentry'),
+                  _serviceCard(title: 'Welding', subtitle: 'Skilled professionals for gates, fences, and metal work.', imagePath: 'assets/welding.jpg', serviceType: 'Welding'),
+                  _serviceCard(title: 'Plumber', subtitle: 'Resolve broken pipes, leaky faucets, and water systems.', imagePath: 'assets/plumber.jpg', serviceType: 'Plumbing'),
+                  _serviceCard(title: 'Electrician', subtitle: 'Safe repairs for wiring, switches, and outlets.', imagePath: 'assets/electrician.jpg', serviceType: 'Electrical'),
                 ],
               ),
               const SizedBox(height: 32),
@@ -735,7 +591,7 @@ class _ClientHomePageState extends State<ClientHomePage> {
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
           color: Color(0xFF2D7A5E),
-          boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, -2))],
+          boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, -2))]
         ),
         child: BottomNavigationBar(
           type: BottomNavigationBarType.fixed,
@@ -752,9 +608,9 @@ class _ClientHomePageState extends State<ClientHomePage> {
                 label: Text('$unreadMessagesCount'),
                 isLabelVisible: unreadMessagesCount > 0,
                 backgroundColor: Colors.red,
-                child: const Icon(Icons.inbox),
+                child: const Icon(Icons.inbox)
               ),
-              label: 'Inbox',
+              label: 'Inbox'
             ),
             const BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
           ],
