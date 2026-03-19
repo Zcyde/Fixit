@@ -17,8 +17,9 @@ class WorkerHomePage extends StatefulWidget {
 }
 
 class _WorkerHomePageState extends State<WorkerHomePage> {
-  int _selectedNavIndex = 0;
+  int _selectedIndex = 0;
   String _selectedTab = 'available';
+  int unreadMessagesCount = 0;
 
   final Set<String> _submittedOffers = {};
   final Set<String> _myJobs = {};
@@ -28,6 +29,10 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
     {'label': 'Welding', 'image': 'assets/welding.jpg'},
     {'label': 'Plumber', 'image': 'assets/plumber.jpg'},
     {'label': 'Electrician', 'image': 'assets/electrician.jpg'},
+    {'label': 'Aircon Tech', 'image': 'assets/aircontech.jpg'},
+    {'label': 'Care Giver', 'image': 'assets/caregiver.jpg'},
+    {'label': 'Appliance Repair', 'image': 'assets/applianceman.jpg'},
+    {'label': 'Roof Repair', 'image': 'assets/roofrepair.jpg'},
   ];
 
   List<Request> get _availableJobs {
@@ -127,19 +132,19 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
             const SizedBox(width: 14),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+              children: const [
                 Text(
-                  'Hello, $workerName!',
-                  style: const TextStyle(
+                  'Welcome!',
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: Colors.black,
                   ),
                 ),
-                const SizedBox(height: 2),
+                SizedBox(height: 2),
                 Text(
                   'Here are the available jobs for you.',
-                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
                 ),
               ],
             ),
@@ -216,148 +221,148 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
   }
 
   Widget _jobCard(Request request, {bool isMyJob = false}) {
-  final hasImage = request.imagePaths.isNotEmpty;
+    final hasImage = request.imagePaths.isNotEmpty;
 
-  return Card(
-    elevation: 3,
-    margin: const EdgeInsets.only(bottom: 14),
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-    clipBehavior: Clip.antiAlias,
-    child: InkWell(
-      borderRadius: BorderRadius.circular(12),
-      onTap: () {
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => WorkRequestDetailsPage(
-        request: request,
-        onAccept: () {
-          setState(() {
-            _myJobs.add(request.id);
-          });
+    return Card(
+      elevation: 3,
+      margin: const EdgeInsets.only(bottom: 14),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => WorkRequestDetailsPage(
+                request: request,
+                onAccept: () {
+                  setState(() {
+                    _myJobs.add(request.id);
+                  });
+                },
+              ),
+            ),
+          );
         },
-      ),
-    ),
-  );
-},
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: double.infinity,
-            height: 140,
-            child: hasImage
-                ? _imageContent(request.imagePaths[0])
-                : Container(
-                    color: Colors.grey[200],
-                    child: Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.construction, size: 40, color: Colors.grey[400]),
-                          const SizedBox(height: 6),
-                          Text(
-                            request.type,
-                            style: TextStyle(
-                              color: Colors.grey[500],
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: double.infinity,
+              height: 140,
+              child: hasImage
+                  ? _imageContent(request.imagePaths[0])
+                  : Container(
+                      color: Colors.grey[200],
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.construction, size: 40, color: Colors.grey[400]),
+                            const SizedBox(height: 6),
+                            Text(
+                              request.type,
+                              style: TextStyle(
+                                color: Colors.grey[500],
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    request.title,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  request.title,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
+                  const SizedBox(height: 6),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        request.userCity ?? 'Nearby',
+                        style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+                      ),
+                      Text(
+                        'PHP ${request.budget}',
+                        style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+                      ),
+                    ],
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 6),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      request.userCity ?? 'Nearby',
-                      style: TextStyle(fontSize: 12, color: Colors.grey[700]),
-                    ),
-                    Text(
-                      'PHP ${request.budget}',
-                      style: TextStyle(fontSize: 12, color: Colors.grey[700]),
-                    ),
-                  ],
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      _dateString(request.createdAt),
-                      style: TextStyle(fontSize: 12, color: Colors.grey[700]),
-                    ),
-                    Text(
-                      _timeString(request.createdAt),
-                      style: TextStyle(fontSize: 12, color: Colors.grey[700]),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Center(
-                  child: isMyJob
-                      ? Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: Colors.grey[200],
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: Colors.grey[400]!),
-                          ),
-                          child: Text(
-                            'Job Accepted',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.grey[700],
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        _dateString(request.createdAt),
+                        style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+                      ),
+                      Text(
+                        _timeString(request.createdAt),
+                        style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Center(
+                    child: isMyJob
+                        ? Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[200],
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: Colors.grey[400]!),
                             ),
-                          ),
-                        )
-                      : Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF2D7A5E),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: GestureDetector(
-                            behavior: HitTestBehavior.translucent,
-                            onTap: () => _offerSubmission(request),
-                            child: const Text(
-                              'Submit Offer',
+                            child: Text(
+                              'Job Accepted',
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
-                                color: Colors.white,
+                                color: Colors.grey[700],
+                              ),
+                            ),
+                          )
+                        : Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF2D7A5E),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: GestureDetector(
+                              behavior: HitTestBehavior.translucent,
+                              onTap: () => _offerSubmission(request),
+                              child: const Text(
+                                'Submit Offer',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                ),
-              ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _emptyState(String message) {
     return Center(
@@ -376,6 +381,52 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
         ),
       ),
     );
+  }
+
+  void _onNavItemTapped(int index) async {
+    if (index == 0) {
+      setState(() => _selectedIndex = 0);
+      return;
+    }
+    switch (index) {
+      case 1:
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Repair List coming soon!'),
+            backgroundColor: Color(0xFF2D7A5E),
+            duration: Duration(seconds: 1),
+          ),
+        );
+        break;
+      case 2:
+        setState(() {
+          unreadMessagesCount = 0;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Messages coming soon!'),
+            backgroundColor: Color(0xFF2D7A5E),
+            duration: Duration(seconds: 1),
+          ),
+        );
+        break;
+      case 3:
+  if (widget.user != null) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => ProfilePage(user: widget.user!)),
+    );
+  } else {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('User not found.'),
+        backgroundColor: Color(0xFF2D7A5E),
+      ),
+    );
+  }
+  break;
+    }
+    setState(() => _selectedIndex = 0);
   }
 
   @override
@@ -413,27 +464,19 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
         actions: [
           Container(
             margin: const EdgeInsets.only(right: 14, top: 10, bottom: 10),
-            padding: const EdgeInsets.symmetric(horizontal: 14),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.06),
-                  blurRadius: 4,
-                  offset: const Offset(0, 1),
-                ),
-              ],
-            ),
-            child: Center(
-              child: Text(
-                'Hello, $workerName',
-                style: const TextStyle(
-                  color: Colors.black,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                ),
+            child: ElevatedButton(
+              onPressed: () {
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (context) => const SignInPage()),
+                  (route) => false,
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.redAccent,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
               ),
+              child: const Text('Logout', style: TextStyle(fontSize: 13)),
             ),
           ),
         ],
@@ -546,54 +589,30 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
         ],
       ),
       bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: const Color(0xFF2D7A5E),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.12),
-              blurRadius: 8,
-              offset: const Offset(0, -2),
-            ),
-          ],
+        decoration: const BoxDecoration(
+          color: Color(0xFF2D7A5E),
+          boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, -2))],
         ),
         child: BottomNavigationBar(
           type: BottomNavigationBarType.fixed,
           backgroundColor: const Color(0xFF2D7A5E),
           selectedItemColor: Colors.white,
           unselectedItemColor: Colors.white70,
-          selectedFontSize: 11,
-          unselectedFontSize: 11,
-          currentIndex: _selectedNavIndex,
-          onTap: (index) {
-            setState(() => _selectedNavIndex = index);
-            if (index != 0) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Coming soon!'),
-                  backgroundColor: Color(0xFF2D7A5E),
-                  duration: Duration(seconds: 1),
-                ),
-              );
-              setState(() => _selectedNavIndex = 0);
-            }
-          },
-          items: const [
+          currentIndex: _selectedIndex,
+          onTap: _onNavItemTapped,
+          items: [
+            const BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+            const BottomNavigationBarItem(icon: Icon(Icons.assignment), label: 'Requests'),
             BottomNavigationBarItem(
-              icon: Icon(Icons.grid_view_rounded),
-              label: 'Dashboard',
+              icon: Badge(
+                label: Text('$unreadMessagesCount'),
+                isLabelVisible: unreadMessagesCount > 0,
+                backgroundColor: Colors.red,
+                child: const Icon(Icons.inbox),
+              ),
+              label: 'Inbox',
             ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.build_outlined),
-              label: 'Repair List',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.mail_outline),
-              label: 'Messages',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline),
-              label: 'Profile',
-            ),
+            const BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
           ],
         ),
       ),

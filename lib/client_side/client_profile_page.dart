@@ -300,6 +300,92 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  // --- Gender Dropdown ---
+  Widget _buildGenderDropdown() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Gender',
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.black87),
+        ),
+        const SizedBox(height: 8),
+        DropdownButtonFormField<String>(
+          value: _genderController.text.isEmpty ? null : _genderController.text,
+          items: ['Male', 'Female'].map((gender) {
+            return DropdownMenuItem(
+              value: gender,
+              child: Text(gender),
+            );
+          }).toList(),
+          onChanged: _isEditing
+              ? (value) {
+                  setState(() {
+                    _genderController.text = value ?? '';
+                  });
+                }
+              : null,
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: _isEditing ? Colors.grey[200] : Colors.grey[100],
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Color(0xFF2D7A5E), width: 1.5),
+            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // --- Birthdate Picker ---
+  Widget _buildBirthdatePicker() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Birthdate',
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.black87),
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: _birthdateController,
+          readOnly: true,
+          enabled: _isEditing,
+          onTap: _isEditing
+              ? () async {
+                  DateTime? pickedDate = await showDatePicker(
+                    context: context,
+                    initialDate: DateTime.tryParse(_birthdateController.text) ?? DateTime(2000, 1, 1),
+                    firstDate: DateTime(1900),
+                    lastDate: DateTime.now(),
+                  );
+                  if (pickedDate != null) {
+                    setState(() {
+                      _birthdateController.text =
+                          '${pickedDate.year}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.day.toString().padLeft(2, '0')}';
+                    });
+                  }
+                }
+              : null,
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: _isEditing ? Colors.grey[200] : Colors.grey[100],
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Color(0xFF2D7A5E), width: 1.5),
+            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            suffixIcon: const Icon(Icons.calendar_today),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -464,11 +550,12 @@ class _ProfilePageState extends State<ProfilePage> {
                   _buildTextField('Email', _emailController),
                   const SizedBox(height: 16),
 
+                  // ✅ Updated Gender + Birthdate Row
                   Row(
                     children: [
-                      Expanded(child: _buildTextField('Gender', _genderController, isRequired: true)),
+                      Expanded(child: _buildGenderDropdown()),
                       const SizedBox(width: 12),
-                      Expanded(child: _buildTextField('Birthdate', _birthdateController, isRequired: true)),
+                      Expanded(child: _buildBirthdatePicker()),
                     ],
                   ),
                   const SizedBox(height: 16),
@@ -591,7 +678,7 @@ class _ProfilePageState extends State<ProfilePage> {
             color: const Color(0xFF2D7A5E),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.1),
+                color: Colors.black.withOpacity(0.1),
                 blurRadius: 8,
                 offset: const Offset(0, -2),
               ),

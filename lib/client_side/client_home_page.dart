@@ -61,7 +61,9 @@ class _ClientHomePageState extends State<ClientHomePage> {
   void _refreshUser() {
     final updatedUser = UsersDatabase.getUserById(currentUser.id);
     if (updatedUser != null) {
-      setState(() { currentUser = updatedUser; });
+      setState(() {
+        currentUser = updatedUser;
+      });
     }
   }
 
@@ -453,6 +455,39 @@ class _ClientHomePageState extends State<ClientHomePage> {
     );
   }
 
+  // 🔴 LOGOUT FUNCTION
+  void _logout() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Logout"),
+          content: const Text("Are you sure you want to logout?"),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancel"),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (context) => const SignInPage()),
+                  (route) => false,
+                );
+              },
+              child: const Text(
+                "Logout",
+                style: TextStyle(color: Colors.red),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -476,15 +511,10 @@ class _ClientHomePageState extends State<ClientHomePage> {
           ],
         ),
         actions: [
+          // ✅ Use logout confirmation
           TextButton(
-            onPressed: () {
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (context) => const SignInPage()),
-                (route) => false
-              );
-            },
-            child: const Text('Log out', style: TextStyle(color: Colors.black, fontSize: 14))
+            onPressed: _logout,
+            child: const Text('Log out', style: TextStyle(color: Colors.black, fontSize: 14)),
           ),
         ],
       ),
@@ -501,33 +531,9 @@ class _ClientHomePageState extends State<ClientHomePage> {
               const SizedBox(height: 12),
               Text('Report repair problems fast and track updates in one place.', style: TextStyle(fontSize: 14, color: Colors.grey[700])),
               const SizedBox(height: 24),
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.grey[300]!)
-                ),
-                child: Row(
-                  children: [
-                    const Padding(
-                      padding: EdgeInsets.all(12.0),
-                      child: Icon(Icons.search, color: Colors.grey)
-                    ),
-                    const Expanded(child: SizedBox()),
-                    Container(
-                      margin: const EdgeInsets.all(6),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[200],
-                        borderRadius: BorderRadius.circular(4),
-                        border: Border.all(color: Colors.grey[400]!)
-                      ),
-                      child: const Text('Location', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500))
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
+
+              // ❌ SEARCH BAR REMOVED
+
               Row(
                 children: [
                   Expanded(
@@ -564,9 +570,11 @@ class _ClientHomePageState extends State<ClientHomePage> {
                   ),
                 ],
               ),
+
               const SizedBox(height: 32),
               const Text('Popular Services', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 16),
+
               GridView.count(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
@@ -579,8 +587,13 @@ class _ClientHomePageState extends State<ClientHomePage> {
                   _serviceCard(title: 'Welding', subtitle: 'Skilled professionals for gates, fences, and metal work.', imagePath: 'assets/welding.jpg', serviceType: 'Welding'),
                   _serviceCard(title: 'Plumber', subtitle: 'Resolve broken pipes, leaky faucets, and water systems.', imagePath: 'assets/plumber.jpg', serviceType: 'Plumbing'),
                   _serviceCard(title: 'Electrician', subtitle: 'Safe repairs for wiring, switches, and outlets.', imagePath: 'assets/electrician.jpg', serviceType: 'Electrical'),
+                  _serviceCard(title: 'Aircon Tech', subtitle: 'Cleaning and repair of aircon units.', imagePath: 'assets/aircontech.jpg', serviceType: 'Aircon'),
+                  _serviceCard(title: 'Care Giver', subtitle: 'General and deep cleaning services.', imagePath: 'assets/caregiver.jpg', serviceType: 'Cleaning'),
+                  _serviceCard(title: 'Appliance Repair', subtitle: 'Fix refrigerator, washing machine, etc.', imagePath: 'assets/applianceman.jpg', serviceType: 'Appliance'),
+                  _serviceCard(title: 'Roof Repair', subtitle: 'Fix leaks and install roofing.', imagePath: 'assets/roofrepair.jpg', serviceType: 'Roofing'),
                 ],
               ),
+
               const SizedBox(height: 32),
               _reviewsSection(),
               const SizedBox(height: 24),
@@ -588,6 +601,7 @@ class _ClientHomePageState extends State<ClientHomePage> {
           ),
         ),
       ),
+
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
           color: Color(0xFF2D7A5E),
@@ -617,5 +631,6 @@ class _ClientHomePageState extends State<ClientHomePage> {
         ),
       ),
     );
+    
   }
 }

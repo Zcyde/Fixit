@@ -36,7 +36,7 @@ class _ClientRequestEditPageState extends State<ClientRequestEditPage> {
   bool get _isEditing => widget.existingRequest != null;
 
   final List<String> _serviceTypes = [
-    'Plumbing', 'Carpentry', 'Welding', 'Electrical', 'Painting', 'Masonry', 'Other',
+    'Plumbing', 'Carpentry', 'Welding', 'Electrical', 'Care Giver', 'Aircon Tech', 'Appliance Repair', 'Roof Repair', 'other'
   ];
 
   final List<String> _priorities = [

@@ -41,6 +41,12 @@ flutter:
     - assets/plumber.jpg
     - assets/electrician.jpg
     - assets/Fixit_logo.png
+    - assets/aircontech.jpg
+    - assets/applianceman.jpg
+    - assets/caregiver.jpg
+    - assets/roofrepair.jpg
+
+    
 
   # For details regarding adding assets from package dependencies, see
   # https://flutter.dev/to/asset-from-package
