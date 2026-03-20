@@ -1,47 +1,67 @@
 import 'package:flutter/material.dart';
 import '../requests_data/request_model.dart';
-import '../worker_side/chat_page.dart'; // Make sure this is the correct path to your ChatPage
+import '../requests_data/messages_database.dart';
+import '../users_data/user_model.dart';
+import '../client_side/chat_conversation_page.dart';
 
 class MyJobDetailsPage extends StatefulWidget {
   final Request request;
-  const MyJobDetailsPage({Key? key, required this.request}) : super(key: key);
+  final User? worker;
+
+  const MyJobDetailsPage({
+    Key? key,
+    required this.request,
+    this.worker,
+  }) : super(key: key);
 
   @override
   State<MyJobDetailsPage> createState() => _MyJobDetailsPageState();
 }
 
 class _MyJobDetailsPageState extends State<MyJobDetailsPage> {
-  late TextEditingController priceController;
-  late TextEditingController messageController;
+  late TextEditingController _priceController;
 
   @override
   void initState() {
     super.initState();
-    priceController = TextEditingController(text: '${widget.request.budget}');
-    messageController = TextEditingController();
+    _priceController = TextEditingController(text: widget.request.budget);
   }
 
   @override
   void dispose() {
-    priceController.dispose();
-    messageController.dispose();
+    _priceController.dispose();
     super.dispose();
   }
 
-  void _sendMessage() {
-    final message = messageController.text.trim();
-    if (message.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please type a message before sending')),
-      );
+  void _openChat() {
+    final worker = widget.worker;
+    if (worker == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Unable to open chat: worker info not available.'),
+        backgroundColor: Colors.red,
+      ));
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Message sent: "$message"')),
+    final conversation = MessagesDatabase.createOrGet(
+      clientId: widget.request.userId,
+      clientName: widget.request.userName,
+      workerId: worker.id,
+      workerName: worker.name,
+      requestId: widget.request.id,
+      requestTitle: widget.request.title,
+      requestType: widget.request.type,
     );
 
-    messageController.clear();
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ChatConversationPage(
+          conversation: conversation,
+          currentUser: worker,
+        ),
+      ),
+    );
   }
 
   @override
@@ -49,10 +69,8 @@ class _MyJobDetailsPageState extends State<MyJobDetailsPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFE8F5F1),
       appBar: AppBar(
-        title: const Text(
-          'Job Details',
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
-        ),
+        title: const Text('Job Details',
+            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
@@ -60,80 +78,137 @@ class _MyJobDetailsPageState extends State<MyJobDetailsPage> {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Job title
-            Text(widget.request.title,
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
-            const SizedBox(height: 12),
-
-            // Description
-            const Text('Description:', style: TextStyle(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 6),
-            Text(widget.request.description,
-                style: TextStyle(color: Colors.grey[700])),
-            const SizedBox(height: 20),
-
-            // Your Price
-            const Text('Your Price:', style: TextStyle(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 6),
-            TextField(
-              controller: priceController,
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(
-                prefixText: 'PHP ',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-              ),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          // Summary card
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2))
+              ],
             ),
-            const SizedBox(height: 20),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Row(children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                      color: const Color(0xFFE8F5F1),
+                      borderRadius: BorderRadius.circular(8)),
+                  child: Text(widget.request.type,
+                      style: const TextStyle(
+                          fontSize: 12, color: Color(0xFF2D7A5E), fontWeight: FontWeight.w600)),
+                ),
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                      color: Colors.green[50], borderRadius: BorderRadius.circular(8)),
+                  child: const Text('In Progress',
+                      style: TextStyle(fontSize: 12, color: Colors.green, fontWeight: FontWeight.w600)),
+                ),
+              ]),
+              const SizedBox(height: 12),
+              Text(widget.request.title,
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+              const SizedBox(height: 6),
+              Text('Client: ${widget.request.userName}',
+                  style: TextStyle(fontSize: 13, color: Colors.grey[600])),
+              if (widget.request.userAddress != null) ...[
+                const SizedBox(height: 4),
+                Row(children: [
+                  Icon(Icons.location_on_outlined, size: 14, color: Colors.grey[500]),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(widget.request.userAddress!,
+                        style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                        overflow: TextOverflow.ellipsis),
+                  ),
+                ]),
+              ],
+            ]),
+          ),
 
-            // Message Client TextField
-            const Text('Message Client:', style: TextStyle(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 6),
-            TextField(
-              controller: messageController,
-              maxLines: 3,
-              decoration: InputDecoration(
-                hintText: 'Type your message to the worker...',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+          const SizedBox(height: 16),
+
+          // Description
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+                color: Colors.white, borderRadius: BorderRadius.circular(12)),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              const Text('Description',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+              const SizedBox(height: 8),
+              Text(widget.request.description,
+                  style: TextStyle(color: Colors.grey[700], height: 1.5)),
+            ]),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Quoted price
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+                color: Colors.white, borderRadius: BorderRadius.circular(12)),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              const Text('Your Quoted Price',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _priceController,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  prefixText: 'PHP ',
+                  filled: true,
+                  fillColor: Colors.grey[100],
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide.none),
+                  focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide:
+                          const BorderSide(color: Color(0xFF2D7A5E), width: 1.5)),
+                  contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 12),
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
+            ]),
+          ),
 
-            // Send Button
-           Center(
-  child: ElevatedButton.icon(
-    onPressed: () {
-      if (messageController.text.trim().isNotEmpty) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ChatPage( // <-- Capital C
-              initialMessage: messageController.text.trim(),
-              workerName: widget.request.workerName ?? 'Worker'
+          const SizedBox(height: 24),
+
+          // Message client button
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: _openChat,
+              icon: const Icon(Icons.chat_bubble_outline, size: 18),
+              label: const Text('Message Client',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF2D7A5E),
+                foregroundColor: Colors.white,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
+              ),
             ),
           ),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please enter a message before sending.')),
-        );
-      }
-    },
-    icon: const Icon(Icons.message),
-    label: const Text('Message Client'),
-    style: ElevatedButton.styleFrom(
-      backgroundColor: const Color(0xFF2D7A5E),
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-    ),
-  ),
-),
-          ],
-        ),
+
+          const SizedBox(height: 40),
+        ]),
       ),
     );
   }

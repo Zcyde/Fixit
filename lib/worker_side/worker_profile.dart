@@ -307,10 +307,6 @@ class _WorkerProfilePageState extends State<WorkerProfilePage> {
 }
 
 
-// ══════════════════════════════════════════════════════════════════════════════
-// Edit Profile Page
-// ══════════════════════════════════════════════════════════════════════════════
-
 class _WorkerEditProfilePage extends StatefulWidget {
   final User user;
   const _WorkerEditProfilePage({required this.user});

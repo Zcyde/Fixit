@@ -4,8 +4,6 @@ import 'package:flutter/foundation.dart';
 import '../users_data/user_model.dart';
 import '../requests_data/request_model.dart';
 import '../requests_data/requests_database.dart';
-import 'client_home_page.dart';
-import 'client_profile_page.dart';
 import 'client_request_details.dart';
 
 class ClientRequestsPage extends StatefulWidget {

@@ -300,7 +300,6 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  // --- Gender Dropdown ---
   Widget _buildGenderDropdown() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -340,7 +339,6 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  // --- Birthdate Picker ---
   Widget _buildBirthdatePicker() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -550,7 +548,6 @@ class _ProfilePageState extends State<ProfilePage> {
                   _buildTextField('Email', _emailController),
                   const SizedBox(height: 16),
 
-                  // ✅ Updated Gender + Birthdate Row
                   Row(
                     children: [
                       Expanded(child: _buildGenderDropdown()),

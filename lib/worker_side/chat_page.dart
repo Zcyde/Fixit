@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 class ChatPage extends StatefulWidget {
-  final String initialMessage; // message from MyJobDetailsPage
-  final String workerName; // optional, who you're chatting with
+  final String initialMessage; 
+  final String workerName; 
 
   const ChatPage({Key? key, required this.initialMessage, required this.workerName}) : super(key: key);
 
@@ -18,7 +18,7 @@ class _ChatPageState extends State<ChatPage> {
   void initState() {
     super.initState();
     if (widget.initialMessage.isNotEmpty) {
-      messages.add(widget.initialMessage); // add initial message
+      messages.add(widget.initialMessage); 
     }
   }
 
