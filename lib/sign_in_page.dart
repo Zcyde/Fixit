@@ -41,16 +41,12 @@ class _SignInPageState extends State<SignInPage> {
       if (user.userType == 'client') {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(
-            builder: (context) => ClientHomePage(user: user),
-          ),
+          MaterialPageRoute(builder: (context) => ClientHomePage(user: user)),
         );
       } else if (user.userType == 'worker') {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(
-            builder: (context) => WorkerHomePage(user: user),
-          ),
+          MaterialPageRoute(builder: (context) => WorkerHomePage(user: user)),
         );
       }
     } else {
@@ -93,7 +89,9 @@ class _SignInPageState extends State<SignInPage> {
               ),
               child: Padding(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 32.0, vertical: 40.0),
+                  horizontal: 32.0,
+                  vertical: 40.0,
+                ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -101,9 +99,9 @@ class _SignInPageState extends State<SignInPage> {
                     // the logo image asset
                     Center(
                       child: Image.asset(
-                        'Fixit_logo.png',
+                        'assets/Fixit_logo.png',
                         width: 135,
-                        height: 135
+                        height: 135,
                       ),
                     ),
                     const SizedBox(height: 20),
@@ -163,8 +161,7 @@ class _SignInPageState extends State<SignInPage> {
                           size: 20,
                         ),
                         onPressed: () {
-                          setState(
-                              () => _obscurePassword = !_obscurePassword);
+                          setState(() => _obscurePassword = !_obscurePassword);
                         },
                       ),
                     ),
@@ -289,11 +286,12 @@ class _SignInPageState extends State<SignInPage> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide:
-              const BorderSide(color: Color(0xFF2D7A5E), width: 1.5),
+          borderSide: const BorderSide(color: Color(0xFF2D7A5E), width: 1.5),
         ),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
       ),
     );
   }
