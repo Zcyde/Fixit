@@ -6,6 +6,7 @@ import '../requests_data/request_model.dart';
 import '../users_data/user_model.dart';
 import '../sign_in_page.dart';
 import 'WorkRequestDetailsPage.dart'; // Details page import
+import 'worker_profile.dart';
 
 class WorkerHomePage extends StatefulWidget {
   final User? user;
@@ -414,7 +415,7 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
   if (widget.user != null) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => ProfilePage(user: widget.user!)),
+      MaterialPageRoute(builder: (context) => WorkerProfilePage(user: widget.user!)),
     );
   } else {
     ScaffoldMessenger.of(context).showSnackBar(
