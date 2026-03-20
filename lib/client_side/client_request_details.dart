@@ -42,7 +42,6 @@ class _ClientRequestDetailsPageState extends State<ClientRequestDetailsPage> {
   Color _getPriorityColor(String priority) {
     switch (priority.toLowerCase()) {
       case 'urgent':
-        return Colors.red;
       case 'high':
         return Colors.red;
       case 'medium':
@@ -51,6 +50,21 @@ class _ClientRequestDetailsPageState extends State<ClientRequestDetailsPage> {
         return Colors.green;
       default:
         return Colors.grey;
+    }
+  }
+
+  String _formatStatus(String status) {
+    switch (status.toLowerCase()) {
+      case 'pending':
+        return 'Pending';
+      case 'in_progress':
+        return 'In Progress';
+      case 'completed':
+        return 'Completed';
+      case 'cancelled':
+        return 'Cancelled';
+      default:
+        return status;
     }
   }
 
@@ -258,6 +272,7 @@ class _ClientRequestDetailsPageState extends State<ClientRequestDetailsPage> {
                 Navigator.pop(context);
                 final updated = _request.copyWith(status: 'cancelled');
                 RequestsDatabase.updateRequest(updated);
+                
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('Request cancelled.'),
@@ -265,6 +280,7 @@ class _ClientRequestDetailsPageState extends State<ClientRequestDetailsPage> {
                     duration: Duration(seconds: 2),
                   ),
                 );
+                
                 Future.delayed(const Duration(seconds: 2), () {
                   if (mounted) Navigator.pop(context);
                 });
@@ -468,6 +484,7 @@ class _ClientRequestDetailsPageState extends State<ClientRequestDetailsPage> {
                 ),
               ),
               const SizedBox(height: 16),
+              // Offers Section Header
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
@@ -493,7 +510,7 @@ class _ClientRequestDetailsPageState extends State<ClientRequestDetailsPage> {
                       ),
                       child: const Center(
                         child: Text(
-                          '0',
+                          '0', // Consider replacing with _request.offers.length
                           style: TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
@@ -519,18 +536,9 @@ class _ClientRequestDetailsPageState extends State<ClientRequestDetailsPage> {
       ),
     );
   }
-
-  String _formatStatus(String status) {
-    switch (status.toLowerCase()) {
-      case 'pending':     return 'Pending';
-      case 'in_progress': return 'In Progress';
-      case 'completed':   return 'Completed';
-      case 'cancelled':   return 'Cancelled';
-      default:            return status;
-    }
-  }
 }
 
+// Internal Image Viewer Page remains the same as provided...
 class _ImageViewerPage extends StatefulWidget {
   final List<String> imagePaths;
   final int initialIndex;

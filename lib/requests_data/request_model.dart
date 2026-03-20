@@ -18,6 +18,7 @@ class Request {
   final String? userCity;
   final String? userBarangay;
   final String? userAddress;
+  final String paymentMethod; 
   
   String status;
 
@@ -34,6 +35,7 @@ class Request {
     required this.userName,
     required this.userEmail,
     required this.userPhone,
+    required this.paymentMethod,
     this.userGender,
     this.userBirthdate,
     this.userCity,
@@ -62,6 +64,8 @@ class Request {
     String? userBarangay,
     String? userAddress,
     String? status,
+    String? paymentMethod,
+    String? workerName,
   }) {
     return Request(
       id: id ?? this.id,
@@ -82,6 +86,8 @@ class Request {
       userBarangay: userBarangay ?? this.userBarangay,
       userAddress: userAddress ?? this.userAddress,
       status: status ?? this.status,
+      paymentMethod: paymentMethod ?? this.paymentMethod,
+      workerName: workerName ?? this.workerName,
     );
   }
 

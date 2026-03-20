@@ -29,6 +29,7 @@ class _ClientRequestEditPageState extends State<ClientRequestEditPage> {
 
   String _selectedType = 'Plumbing';
   String _selectedPriority = 'Medium';
+  String _selectedPaymentMethod = 'Cash'; // Default payment method
 
   final List<XFile> _selectedImages = [];
   final ImagePicker _picker = ImagePicker();
@@ -43,6 +44,10 @@ class _ClientRequestEditPageState extends State<ClientRequestEditPage> {
     'Low', 'Medium', 'High', 'Urgent',
   ];
 
+  final List<String> _paymentMethods = [
+    'Cash', 'Gcash',
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -54,6 +59,7 @@ class _ClientRequestEditPageState extends State<ClientRequestEditPage> {
       _descriptionController.text = r.description;
       _selectedType = _serviceTypes.contains(r.type) ? r.type : 'Plumbing';
       _selectedPriority = _priorities.contains(r.priority) ? r.priority : 'Medium';
+      _selectedPaymentMethod = _paymentMethods.contains(r.paymentMethod) ? r.paymentMethod : 'Cash';
     } else {
       if (widget.serviceType != null && _serviceTypes.contains(widget.serviceType)) {
         _selectedType = widget.serviceType!;
@@ -232,6 +238,7 @@ class _ClientRequestEditPageState extends State<ClientRequestEditPage> {
           budget: _budgetController.text.trim(),
           description: _descriptionController.text.trim(),
           priority: _selectedPriority,
+          paymentMethod: _selectedPaymentMethod, // Pass updated payment method
           imagePaths: allPaths,
         );
 
@@ -264,6 +271,7 @@ class _ClientRequestEditPageState extends State<ClientRequestEditPage> {
           budget: _budgetController.text.trim(),
           description: _descriptionController.text.trim(),
           priority: _selectedPriority,
+          paymentMethod: _selectedPaymentMethod, // Pass selected payment method
           imagePaths: _selectedImages.map((img) => img.path).toList(),
           createdAt: DateTime.now(),
           userId: widget.user.id,
@@ -396,6 +404,13 @@ class _ClientRequestEditPageState extends State<ClientRequestEditPage> {
                 _buildTextField(label: 'Description', controller: _descriptionController, maxLines: 5, hintText: 'Describe the issue in detail...'),
                 const SizedBox(height: 20),
                 _buildDropdown(label: 'Priority', value: _selectedPriority, items: _priorities, onChanged: (value) => setState(() => _selectedPriority = value!)),
+                const SizedBox(height: 20),
+                _buildDropdown(
+                  label: 'Payment Method', 
+                  value: _selectedPaymentMethod, 
+                  items: _paymentMethods, 
+                  onChanged: (value) => setState(() => _selectedPaymentMethod = value!),
+                ),
                 const SizedBox(height: 20),
                 const Text('Photo', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black)),
                 const SizedBox(height: 8),

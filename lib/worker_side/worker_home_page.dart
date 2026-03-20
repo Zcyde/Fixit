@@ -3,11 +3,9 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import '../requests_data/requests_database.dart';
 import '../requests_data/request_model.dart';
-import '../requests_data/messages_database.dart';
 import '../users_data/user_model.dart';
 import '../sign_in_page.dart';
-import '../client_side/inbox_page.dart';
-import 'WorkRequestDetailsPage.dart';
+import 'WorkRequestDetailsPage.dart'; 
 import 'worker_profile.dart';
 
 class WorkerHomePage extends StatefulWidget {
@@ -22,6 +20,8 @@ class WorkerHomePage extends StatefulWidget {
 class _WorkerHomePageState extends State<WorkerHomePage> {
   int _selectedIndex = 0;
   String _selectedTab = 'available';
+  int unreadMessagesCount = 0;
+
   final Set<String> _myJobs = {};
 
   static const List<Map<String, String>> _serviceCategories = [
@@ -35,25 +35,33 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
     {'label': 'Roof Repair', 'image': 'assets/roofrepair.jpg'},
   ];
 
-  int get _unreadCount {
-    if (widget.user == null) return 0;
-    return MessagesDatabase.totalUnreadFor(widget.user!.id);
+  List<Request> get _availableJobs {
+    return RequestsDatabase.getAllRequests()
+        .where((r) => r.status == 'pending' && !_myJobs.contains(r.id))
+        .toList()
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
   }
 
-  List<Request> get _availableJobs =>
-      RequestsDatabase.getAllRequests()
-          .where((r) => r.status == 'pending' && !_myJobs.contains(r.id))
-          .toList()
-        ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+  List<Request> get _workerJobs {
+    return RequestsDatabase.getAllRequests()
+        .where((r) => r.status == 'in_progress' && _myJobs.contains(r.id))
+        .toList();
+  }
 
-  List<Request> get _workerJobs => RequestsDatabase.getAllRequests()
-      .where((r) => r.status == 'in_progress' && _myJobs.contains(r.id))
-      .toList();
+  List<Request> get _historyJobs {
+    return RequestsDatabase.getAllRequests()
+        .where((r) => r.status == 'completed' || r.status == 'cancelled')
+        .toList();
+  }
 
   void _offerSubmission(Request request) {
     final updated = request.copyWith(status: 'in_progress');
     RequestsDatabase.updateRequest(updated);
-    setState(() => _myJobs.add(request.id));
+
+    setState(() {
+      _myJobs.add(request.id);
+    });
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Offer submitted for "${request.title}"!'),
@@ -62,211 +70,164 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
     );
   }
 
-  void _onNavItemTapped(int index) async {
-    if (index == 0) {
-      setState(() => _selectedIndex = 0);
-      return;
-    }
-    switch (index) {
-      case 1:
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Repair List coming soon!'),
-            backgroundColor: Color(0xFF2D7A5E),
-            duration: Duration(seconds: 1),
-          ),
-        );
-        break;
-      case 2:
-        if (widget.user != null) {
-          await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => InboxPage(user: widget.user!)),
-          );
-          setState(() {});
-        }
-        break;
-      case 3:
-        if (widget.user != null) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => WorkerProfilePage(user: widget.user!),
-            ),
-          );
-        }
-        break;
-    }
-    setState(() => _selectedIndex = 0);
-  }
-
-  Widget _imageContent(String path) {
+  Widget _imageContent(String? imagePath) {
+    if (imagePath == null || imagePath.isEmpty) return _placeholder();
+    
     if (kIsWeb) {
       return Image.network(
-        path,
+        imagePath,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => _placeholder(),
+      );
+    } else {
+      return Image.file(
+        File(imagePath),
         fit: BoxFit.cover,
         errorBuilder: (_, __, ___) => _placeholder(),
       );
     }
-    return Image.file(
-      File(path),
-      fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) => _placeholder(),
+  }
+
+  Widget _placeholder() {
+    return Container(
+      color: Colors.grey[300],
+      child: Center(
+        child: Icon(Icons.image, size: 40, color: Colors.grey[500]),
+      ),
     );
   }
 
-  Widget _placeholder() => Container(
-    color: Colors.grey[300],
-    child: Center(child: Icon(Icons.image, size: 40, color: Colors.grey[500])),
-  );
-
-  String _dateStr(DateTime dt) {
-    const m = [
-      '',
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
+  String _dateString(DateTime? dt) {
+    if (dt == null) return "N/A";
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
     ];
-    return '${m[dt.month]} ${dt.day}';
+    return '${months[dt.month - 1]} ${dt.day}';
   }
 
-  String _timeStr(DateTime dt) {
-    if (dt.hour < 12) return 'Morning';
-    if (dt.hour < 17) return 'Afternoon';
+  String _timeString(DateTime? dt) {
+    if (dt == null) return "Unknown";
+    final hour = dt.hour;
+    if (hour < 12) return 'Morning';
+    if (hour < 17) return 'Afternoon';
     return 'Evening';
   }
 
-  Widget _helloCard() => Card(
-    elevation: 2,
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-    color: Colors.white,
-    child: Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      child: Row(
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: const Color(0xFFE8F5F1),
-              border: Border.all(color: const Color(0xFF2D7A5E), width: 2),
+  Widget _helloCard(String workerName) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      color: Colors.white,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: const Color(0xFFE8F5F1),
+                border: Border.all(color: const Color(0xFF2D7A5E), width: 2),
+              ),
+              child: const Icon(Icons.person, size: 26, color: Color(0xFF2D7A5E)),
             ),
-            child: const Icon(Icons.person, size: 26, color: Color(0xFF2D7A5E)),
-          ),
-          const SizedBox(width: 14),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: const [
-              Text(
-                'Welcome!',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
+            const SizedBox(width: 14),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Welcome, $workerName!',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
                 ),
-              ),
-              SizedBox(height: 2),
-              Text(
-                'Here are the available jobs for you.',
-                style: TextStyle(fontSize: 12, color: Colors.grey),
-              ),
-            ],
-          ),
-        ],
+                const SizedBox(height: 2),
+                const Text(
+                  'Here are the available jobs for you.',
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
-    ),
-  );
+    );
+  }
 
-  Widget _categoriesRow() => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      const Text(
-        'Service Categories',
-        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
-      ),
-      const SizedBox(height: 10),
-      LayoutBuilder(
-        builder: (context, constraints) {
-          int crossAxisCount = 2;
-
-          if (constraints.maxWidth >= 1100) {
-            crossAxisCount = 5;
-          } else if (constraints.maxWidth >= 800) {
-            crossAxisCount = 4;
-          } else if (constraints.maxWidth >= 600) {
-            crossAxisCount = 3;
-          }
-
-          return GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
+  Widget _categoriesRow() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Service Categories',
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+        ),
+        const SizedBox(height: 10),
+        SizedBox(
+          height: 150,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
             itemCount: _serviceCategories.length,
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: crossAxisCount,
-              crossAxisSpacing: 10,
-              mainAxisSpacing: 10,
-              childAspectRatio: 0.95,
-            ),
-            itemBuilder: (_, i) {
-              final cat = _serviceCategories[i];
-              return Card(
-                elevation: 3,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Expanded(
-                      flex: 4,
-                      child: ClipRRect(
-                        borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(12),
-                        ),
-                        child: Image.asset(cat['image']!, fit: BoxFit.cover),
-                      ),
-                    ),
-                    Expanded(
-                      flex: 1,
-                      child: Container(
-                        color: Colors.white,
-                        alignment: Alignment.center,
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        child: Text(
-                          cat['label']!,
-                          textAlign: TextAlign.center,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black87,
+            separatorBuilder: (_, __) => const SizedBox(width: 10),
+            itemBuilder: (context, index) {
+              final category = _serviceCategories[index];
+              return SizedBox(
+                width: 130,
+                child: Card(
+                  elevation: 3,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      SizedBox(
+                        height: 105,
+                        child: ClipRRect(
+                          borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                          child: Image.asset(
+                            category['image'] ?? '',
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) => _placeholder(),
                           ),
                         ),
                       ),
-                    ),
-                  ],
+                      Expanded(
+                        child: Container(
+                          color: Colors.white,
+                          alignment: Alignment.center,
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          child: Text(
+                            category['label'] ?? 'General',
+                            textAlign: TextAlign.center,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               );
             },
-          );
-        },
-      ),
-    ],
-  );
+          ),
+        ),
+      ],
+    );
+  }
 
   Widget _jobCard(Request request, {bool isMyJob = false}) {
     final hasImage = request.imagePaths.isNotEmpty;
+
     return Card(
       elevation: 3,
       margin: const EdgeInsets.only(bottom: 14),
@@ -278,10 +239,13 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => WorkRequestDetailsPage(
+              builder: (context) => WorkRequestDetailsPage(
                 request: request,
-                worker: widget.user,
-                onAccept: () => setState(() => _myJobs.add(request.id)),
+                onAccept: () {
+                  setState(() {
+                    _myJobs.add(request.id);
+                  });
+                },
               ),
             ),
           );
@@ -300,11 +264,7 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(
-                              Icons.construction,
-                              size: 40,
-                              color: Colors.grey[400],
-                            ),
+                            Icon(Icons.construction, size: 40, color: Colors.grey[400]),
                             const SizedBox(height: 6),
                             Text(
                               request.type,
@@ -352,11 +312,11 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        _dateStr(request.createdAt),
+                        _dateString(request.createdAt),
                         style: TextStyle(fontSize: 12, color: Colors.grey[700]),
                       ),
                       Text(
-                        _timeStr(request.createdAt),
+                        _timeString(request.createdAt),
                         style: TextStyle(fontSize: 12, color: Colors.grey[700]),
                       ),
                     ],
@@ -365,10 +325,7 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
                   Center(
                     child: isMyJob
                         ? Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 8,
-                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                             decoration: BoxDecoration(
                               color: Colors.grey[200],
                               borderRadius: BorderRadius.circular(20),
@@ -383,25 +340,19 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
                               ),
                             ),
                           )
-                        : GestureDetector(
-                            behavior: HitTestBehavior.translucent,
-                            onTap: () => _offerSubmission(request),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 22,
-                                vertical: 8,
-                              ),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF2D7A5E),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: const Text(
-                                'Submit Offer',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white,
-                                ),
+                        : ElevatedButton(
+                            onPressed: () => _offerSubmission(request),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF2D7A5E),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 8),
+                            ),
+                            child: const Text(
+                              'Submit Offer',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
                               ),
                             ),
                           ),
@@ -415,27 +366,72 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
     );
   }
 
-  Widget _emptyState(String msg) => Center(
-    child: Padding(
-      padding: const EdgeInsets.only(top: 60),
-      child: Column(
-        children: [
-          Icon(Icons.work_outline, size: 64, color: Colors.grey[300]),
-          const SizedBox(height: 16),
-          Text(
-            msg,
-            style: TextStyle(fontSize: 15, color: Colors.grey[500]),
-            textAlign: TextAlign.center,
-          ),
-        ],
+  Widget _emptyState(String message) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.only(top: 60),
+        child: Column(
+          children: [
+            Icon(Icons.work_outline, size: 64, color: Colors.grey[300]),
+            const SizedBox(height: 16),
+            Text(
+              message,
+              style: TextStyle(fontSize: 15, color: Colors.grey[500]),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
-    ),
-  );
+    );
+  }
+
+  void _onNavItemTapped(int index) {
+    if (index == _selectedIndex) return;
+
+    switch (index) {
+      case 0:
+        setState(() => _selectedIndex = 0);
+        break;
+      case 1:
+        _showComingSoon('Repair List coming soon!');
+        break;
+      case 2:
+        setState(() => unreadMessagesCount = 0);
+        _showComingSoon('Messages coming soon!');
+        break;
+      case 3:
+        if (widget.user != null) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => WorkerProfilePage(user: widget.user!)),
+          );
+        } else {
+          _showComingSoon('User not found.');
+        }
+        break;
+    }
+  }
+
+  void _showComingSoon(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: const Color(0xFF2D7A5E),
+        duration: const Duration(seconds: 1),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    final jobs = _selectedTab == 'available' ? _availableJobs : _workerJobs;
-    final unread = _unreadCount;
+    // Crucial: Use null-aware operator for the name
+    final String workerName = widget.user?.name ?? 'Worker';
+
+    final List<Request> jobs = _selectedTab == 'available'
+        ? _availableJobs
+        : _selectedTab == 'myjobs'
+            ? _workerJobs
+            : _historyJobs;
 
     return Scaffold(
       backgroundColor: const Color(0xFFE8F5F1),
@@ -444,11 +440,13 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (_) => const SignInPage()),
-            (route) => false,
-          ),
+          onPressed: () {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (context) => const SignInPage()),
+              (route) => false,
+            );
+          },
         ),
         title: const Text(
           'Home Page',
@@ -462,18 +460,18 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
           Container(
             margin: const EdgeInsets.only(right: 14, top: 10, bottom: 10),
             child: ElevatedButton(
-              onPressed: () => Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (_) => const SignInPage()),
-                (route) => false,
-              ),
+              onPressed: () {
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (context) => const SignInPage()),
+                  (route) => false,
+                );
+              },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.redAccent,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
               ),
-              child: const Text('Logout', style: TextStyle(fontSize: 13)),
+              child: const Text('Logout', style: TextStyle(fontSize: 13, color: Colors.white)),
             ),
           ),
         ],
@@ -488,10 +486,11 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 12),
-                    _helloCard(),
+                    _helloCard(workerName),
                     const SizedBox(height: 16),
                     _categoriesRow(),
                     const SizedBox(height: 16),
+                    // Tabs
                     Container(
                       decoration: BoxDecoration(
                         color: Colors.grey[200],
@@ -501,39 +500,23 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
                         children: [
                           Expanded(
                             child: GestureDetector(
-                              onTap: () =>
-                                  setState(() => _selectedTab = 'available'),
+                              onTap: () => setState(() => _selectedTab = 'available'),
                               child: AnimatedContainer(
                                 duration: const Duration(milliseconds: 200),
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 10,
-                                ),
+                                padding: const EdgeInsets.symmetric(vertical: 10),
                                 decoration: BoxDecoration(
-                                  color: _selectedTab == 'available'
-                                      ? Colors.white
-                                      : Colors.transparent,
+                                  color: _selectedTab == 'available' ? Colors.white : Colors.transparent,
                                   borderRadius: BorderRadius.circular(8),
                                   boxShadow: _selectedTab == 'available'
-                                      ? [
-                                          BoxShadow(
-                                            color: Colors.black.withOpacity(
-                                              0.08,
-                                            ),
-                                            blurRadius: 4,
-                                            offset: const Offset(0, 1),
-                                          ),
-                                        ]
+                                      ? [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 4)]
                                       : [],
                                 ),
                                 child: Center(
                                   child: Text(
                                     'Available',
                                     style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      color: _selectedTab == 'available'
-                                          ? Colors.black
-                                          : Colors.grey[600],
+                                      fontWeight: FontWeight.bold,
+                                      color: _selectedTab == 'available' ? Colors.black : Colors.grey,
                                     ),
                                   ),
                                 ),
@@ -542,28 +525,20 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
                           ),
                           Expanded(
                             child: GestureDetector(
-                              onTap: () =>
-                                  setState(() => _selectedTab = 'myjobs'),
+                              onTap: () => setState(() => _selectedTab = 'myjobs'),
                               child: AnimatedContainer(
                                 duration: const Duration(milliseconds: 200),
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 10,
-                                ),
+                                padding: const EdgeInsets.symmetric(vertical: 10),
                                 decoration: BoxDecoration(
-                                  color: _selectedTab == 'myjobs'
-                                      ? const Color(0xFF3A3A3A)
-                                      : Colors.transparent,
+                                  color: _selectedTab == 'myjobs' ? const Color(0xFF3A3A3A) : Colors.transparent,
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Center(
                                   child: Text(
                                     'My Jobs',
                                     style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      color: _selectedTab == 'myjobs'
-                                          ? Colors.white
-                                          : Colors.grey[600],
+                                      fontWeight: FontWeight.bold,
+                                      color: _selectedTab == 'myjobs' ? Colors.white : Colors.grey,
                                     ),
                                   ),
                                 ),
@@ -574,16 +549,15 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
                       ),
                     ),
                     const SizedBox(height: 16),
+                    // Job List
                     if (jobs.isEmpty)
                       _emptyState(
                         _selectedTab == 'available'
-                            ? 'No available jobs right now.\nCheck back when clients post requests.'
-                            : "You haven't taken any jobs yet.",
+                            ? 'No available jobs right now.\nCheck back later.'
+                            : 'You haven\'t taken any jobs yet.',
                       )
                     else
-                      ...jobs.map(
-                        (r) => _jobCard(r, isMyJob: _selectedTab == 'myjobs'),
-                      ),
+                      ...jobs.map((r) => _jobCard(r, isMyJob: _selectedTab == 'myjobs')),
                     const SizedBox(height: 20),
                   ],
                 ),
@@ -592,48 +566,27 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
           ),
         ],
       ),
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          color: Color(0xFF2D7A5E),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black12,
-              blurRadius: 8,
-              offset: Offset(0, -2),
+      bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
+        backgroundColor: const Color(0xFF2D7A5E),
+        selectedItemColor: Colors.white,
+        unselectedItemColor: Colors.white70,
+        currentIndex: _selectedIndex,
+        onTap: _onNavItemTapped,
+        items: [
+          const BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          const BottomNavigationBarItem(icon: Icon(Icons.assignment), label: 'Requests'),
+          BottomNavigationBarItem(
+            icon: Badge(
+              label: Text('$unreadMessagesCount'),
+              isLabelVisible: unreadMessagesCount > 0,
+              backgroundColor: Colors.red,
+              child: const Icon(Icons.inbox),
             ),
-          ],
-        ),
-        child: BottomNavigationBar(
-          type: BottomNavigationBarType.fixed,
-          backgroundColor: const Color(0xFF2D7A5E),
-          selectedItemColor: Colors.white,
-          unselectedItemColor: Colors.white70,
-          currentIndex: _selectedIndex,
-          onTap: _onNavItemTapped,
-          items: [
-            const BottomNavigationBarItem(
-              icon: Icon(Icons.home),
-              label: 'Home',
-            ),
-            const BottomNavigationBarItem(
-              icon: Icon(Icons.assignment),
-              label: 'Requests',
-            ),
-            BottomNavigationBarItem(
-              icon: Badge(
-                label: Text('$unread'),
-                isLabelVisible: unread > 0,
-                backgroundColor: Colors.red,
-                child: const Icon(Icons.inbox),
-              ),
-              label: 'Inbox',
-            ),
-            const BottomNavigationBarItem(
-              icon: Icon(Icons.person),
-              label: 'Profile',
-            ),
-          ],
-        ),
+            label: 'Inbox',
+          ),
+          const BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+        ],
       ),
     );
   }
