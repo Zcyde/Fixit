@@ -1,21 +1,19 @@
 import 'package:flutter/material.dart';
 import '../users_data/users_database.dart';
 import '../users_data/user_model.dart';
+import 'client_requests_page.dart';
+import 'inbox_page.dart';
 
 class ProfilePage extends StatefulWidget {
   final User user;
-
   const ProfilePage({Key? key, required this.user}) : super(key: key);
-
   @override
   State<ProfilePage> createState() => _ProfilePageState();
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  String _selectedTab = 'profile';
   bool _isEditing = false;
   late bool _wasProfileIncompleteOnLoad;
-
   late TextEditingController _nameController;
   late TextEditingController _contactController;
   late TextEditingController _emailController;
@@ -28,9 +26,7 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   void initState() {
     super.initState();
-
     _wasProfileIncompleteOnLoad = !widget.user.isProfileComplete;
-
     _nameController = TextEditingController(text: widget.user.name);
     _contactController = TextEditingController(text: widget.user.phone);
     _emailController = TextEditingController(text: widget.user.email);
@@ -39,7 +35,6 @@ class _ProfilePageState extends State<ProfilePage> {
     _cityController = TextEditingController(text: widget.user.city ?? '');
     _barangayController = TextEditingController(text: widget.user.barangay ?? '');
     _addressController = TextEditingController(text: widget.user.address ?? '');
-
     if (_wasProfileIncompleteOnLoad) {
       _isEditing = true;
     }
@@ -73,7 +68,6 @@ class _ProfilePageState extends State<ProfilePage> {
         );
         return;
       }
-
       final updatedUser = widget.user.copyWith(
         name: _nameController.text.trim(),
         phone: _contactController.text.trim(),
@@ -84,14 +78,11 @@ class _ProfilePageState extends State<ProfilePage> {
         barangay: _barangayController.text.trim(),
         address: _addressController.text.trim(),
       );
-
       final success = UsersDatabase.updateUser(updatedUser);
-
       if (success) {
         setState(() {
           _isEditing = false;
         });
-
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Profile updated successfully!'),
@@ -99,7 +90,6 @@ class _ProfilePageState extends State<ProfilePage> {
             duration: Duration(seconds: 1),
           ),
         );
-
         if (_wasProfileIncompleteOnLoad) {
           Future.delayed(const Duration(seconds: 1), () {
             if (mounted) {
@@ -129,7 +119,6 @@ class _ProfilePageState extends State<ProfilePage> {
 
   void _showPasswordVerificationDialog() {
     final passwordController = TextEditingController();
-
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -233,7 +222,6 @@ class _ProfilePageState extends State<ProfilePage> {
       );
       return;
     }
-
     setState(() {
       _isEditing = false;
       _nameController.text = widget.user.name;
@@ -250,7 +238,6 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget _buildTextField(String label, TextEditingController controller, {bool isRequired = false}) {
     final isEmpty = controller.text.trim().isEmpty;
     final showRedTint = isRequired && _wasProfileIncompleteOnLoad && _isEditing && isEmpty;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -384,195 +371,143 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  void _onNavItemTapped(int index) async {
+    if (index == 3) return;
+    switch (index) {
+      case 0:
+        Navigator.pop(context);
+        break;
+      case 1:
+        await Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => ClientRequestsPage(user: widget.user)),
+        );
+        break;
+      case 2:
+        await Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => InboxPage(user: widget.user)),
+        );
+        break;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
-        final currentUser = UsersDatabase.getUserById(widget.user.id);
-        if (currentUser != null && !currentUser.isProfileComplete) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Please complete your profile before continuing'),
-              backgroundColor: Colors.red,
+    return Scaffold(
+      backgroundColor: Colors.grey[100],
+      appBar: AppBar(
+        backgroundColor: const Color(0xFFE8F5F1),
+        elevation: 0,
+        automaticallyImplyLeading: false,
+        title: Row(children: [
+          const Text('Fixit',
+              style: TextStyle(color: Colors.black, fontWeight: FontWeight.w600, fontSize: 16)),
+          const SizedBox(width: 24),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.grey[300]!),
             ),
-          );
-          return false;
-        }
-        return true;
-      },
-      child: Scaffold(
-        backgroundColor: Colors.grey[100],
-        appBar: AppBar(
-          backgroundColor: Colors.white,
-          elevation: 0,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.black),
-            onPressed: () {
-              final currentUser = UsersDatabase.getUserById(widget.user.id);
-              if (currentUser != null && !currentUser.isProfileComplete) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Please complete your profile before continuing'),
-                    backgroundColor: Colors.red,
-                  ),
-                );
-              } else {
-                Navigator.pop(context);
-              }
-            },
+            child: const Text('Resident',
+                style: TextStyle(color: Colors.black, fontSize: 14, fontWeight: FontWeight.w500)),
           ),
-          title: const Text(
-            'Profile Page',
-            style: TextStyle(
-              color: Colors.black,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          actions: [
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Center(
-                child: Text(
-                  'Hello, ${widget.user.name}',
-                  style: TextStyle(
-                    color: Colors.grey[700],
-                    fontSize: 14,
-                  ),
-                ),
-              ),
-            ),
-          ],
-          bottom: PreferredSize(
-            preferredSize: const Size.fromHeight(1),
-            child: Container(color: Colors.grey[300], height: 1),
-          ),
+        ]),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(color: Colors.grey[300], height: 1),
         ),
-        body: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children: [
-                Container(
-                  width: 100,
-                  height: 100,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.grey[300],
-                    border: Border.all(color: Colors.grey[400]!, width: 2),
+      ),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            children: [
+              Container(
+                width: 100,
+                height: 100,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.grey[300],
+                  border: Border.all(color: Colors.grey[400]!, width: 2),
+                ),
+                child: Icon(Icons.person, size: 50, color: Colors.grey[600]),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                widget.user.name,
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 24),
+              _buildTextField('Name', _nameController),
+              const SizedBox(height: 16),
+              _buildTextField('Contact Number', _contactController),
+              const SizedBox(height: 16),
+              _buildTextField('Email', _emailController),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(child: _buildGenderDropdown()),
+                  const SizedBox(width: 12),
+                  Expanded(child: _buildBirthdatePicker()),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(child: _buildTextField('City', _cityController, isRequired: true)),
+                  const SizedBox(width: 12),
+                  Expanded(child: _buildTextField('Barangay', _barangayController, isRequired: true)),
+                ],
+              ),
+              const SizedBox(height: 16),
+              _buildTextField('Address', _addressController, isRequired: true),
+              const SizedBox(height: 28),
+              if (_isEditing) ...[
+                if (_wasProfileIncompleteOnLoad) ...[
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _handleEditProfile,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF6DBD8E),
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: const Text(
+                        'Save',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                      ),
+                    ),
                   ),
-                  child: Icon(Icons.person, size: 50, color: Colors.grey[600]),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  widget.user.name,
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 24),
-
-                Row(
-                  children: [
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () => setState(() => _selectedTab = 'profile'),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          decoration: BoxDecoration(
-                            color: _selectedTab == 'profile'
-                                ? const Color(0xFF2D7A5E)
-                                : Colors.white,
-                            borderRadius: BorderRadius.circular(7),
-                            border: Border.all(
-                              color: _selectedTab == 'profile'
-                                  ? const Color(0xFF2D7A5E)
-                                  : Colors.grey[300]!,
+                ] else ...[
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextButton(
+                          onPressed: _cancelEdit,
+                          style: TextButton.styleFrom(
+                            foregroundColor: Colors.grey[700],
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            backgroundColor: Colors.grey[200],
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
                             ),
                           ),
-                          child: Center(
-                            child: Text(
-                              'Profile',
-                              style: TextStyle(
-                                color: _selectedTab == 'profile'
-                                    ? Colors.white
-                                    : Colors.grey[600],
-                                fontWeight: FontWeight.w600,
-                                fontSize: 14,
-                              ),
-                            ),
+                          child: const Text(
+                            'Cancel',
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
                           ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () => setState(() => _selectedTab = 'history'),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          decoration: BoxDecoration(
-                            color: _selectedTab == 'history'
-                                ? const Color(0xFF2D7A5E)
-                                : Colors.white,
-                            borderRadius: BorderRadius.circular(7),
-                            border: Border.all(
-                              color: _selectedTab == 'history'
-                                  ? const Color(0xFF2D7A5E)
-                                  : Colors.grey[300]!,
-                            ),
-                          ),
-                          child: Center(
-                            child: Text(
-                              'History',
-                              style: TextStyle(
-                                color: _selectedTab == 'history'
-                                    ? Colors.white
-                                    : Colors.grey[600],
-                                fontWeight: FontWeight.w600,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-
-                if (_selectedTab == 'profile') ...[
-                  _buildTextField('Name', _nameController),
-                  const SizedBox(height: 16),
-                  _buildTextField('Contact Number', _contactController),
-                  const SizedBox(height: 16),
-                  _buildTextField('Email', _emailController),
-                  const SizedBox(height: 16),
-
-                  Row(
-                    children: [
-                      Expanded(child: _buildGenderDropdown()),
                       const SizedBox(width: 12),
-                      Expanded(child: _buildBirthdatePicker()),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-
-                  Row(
-                    children: [
-                      Expanded(child: _buildTextField('City', _cityController, isRequired: true)),
-                      const SizedBox(width: 12),
-                      Expanded(child: _buildTextField('Barangay', _barangayController, isRequired: true)),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-
-                  _buildTextField('Address', _addressController, isRequired: true),
-                  const SizedBox(height: 28),
-
-                  if (_isEditing) ...[
-                    if (_wasProfileIncompleteOnLoad) ...[
-                      SizedBox(
-                        width: double.infinity,
+                      Expanded(
                         child: ElevatedButton(
                           onPressed: _handleEditProfile,
                           style: ElevatedButton.styleFrom(
@@ -590,115 +525,61 @@ class _ProfilePageState extends State<ProfilePage> {
                           ),
                         ),
                       ),
-                    ] else ...[
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextButton(
-                              onPressed: _cancelEdit,
-                              style: TextButton.styleFrom(
-                                foregroundColor: Colors.grey[700],
-                                padding: const EdgeInsets.symmetric(vertical: 16),
-                                backgroundColor: Colors.grey[200],
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                              ),
-                              child: const Text(
-                                'Cancel',
-                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: ElevatedButton(
-                              onPressed: _handleEditProfile,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF6DBD8E),
-                                foregroundColor: Colors.white,
-                                elevation: 0,
-                                padding: const EdgeInsets.symmetric(vertical: 16),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                              ),
-                              child: const Text(
-                                'Save',
-                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
                     ],
-                  ] else ...[
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _handleEditProfile,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF6DBD8E),
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        child: const Text(
-                          'Edit Profile',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-                        ),
-                      ),
-                    ),
-                  ],
-                ] else ...[
-                  Container(
-                    padding: const EdgeInsets.all(32),
-                    child: Center(
-                      child: Text(
-                        'History coming soon!',
-                        style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-                      ),
-                    ),
                   ),
                 ],
-
-                const SizedBox(height: 80),
+              ] else ...[
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _handleEditProfile,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF6DBD8E),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: const Text(
+                      'Edit Profile',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                ),
               ],
-            ),
+              const SizedBox(height: 80),
+            ],
           ),
         ),
-        bottomNavigationBar: Container(
-          decoration: BoxDecoration(
-            color: const Color(0xFF2D7A5E),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 8,
-                offset: const Offset(0, -2),
-              ),
-            ],
-          ),
-          child: BottomNavigationBar(
-            type: BottomNavigationBarType.fixed,
-            backgroundColor: const Color(0xFF2D7A5E),
-            selectedItemColor: Colors.white,
-            unselectedItemColor: Colors.white70,
-            selectedFontSize: 12,
-            unselectedFontSize: 12,
-            currentIndex: 3,
-            onTap: (index) {
-              if (index != 3) Navigator.pop(context);
-            },
-            items: const [
-              BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-              BottomNavigationBarItem(icon: Icon(Icons.assignment), label: 'Requests'),
-              BottomNavigationBarItem(icon: Icon(Icons.inbox), label: 'Inbox'),
-              BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-            ],
-          ),
+      ),
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFF2D7A5E),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 8,
+              offset: const Offset(0, -2),
+            ),
+          ],
+        ),
+        child: BottomNavigationBar(
+          type: BottomNavigationBarType.fixed,
+          backgroundColor: const Color(0xFF2D7A5E),
+          selectedItemColor: Colors.white,
+          unselectedItemColor: Colors.white70,
+          selectedFontSize: 12,
+          unselectedFontSize: 12,
+          currentIndex: 3,
+          onTap: _onNavItemTapped,
+          items: const [
+            BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+            BottomNavigationBarItem(icon: Icon(Icons.assignment), label: 'Requests'),
+            BottomNavigationBarItem(icon: Icon(Icons.inbox), label: 'Inbox'),
+            BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+          ],
         ),
       ),
     );

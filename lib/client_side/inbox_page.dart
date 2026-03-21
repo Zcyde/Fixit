@@ -178,34 +178,19 @@ class _InboxPageState extends State<InboxPage> {
         ),
         title: Row(children: [
           const Text('Fixit',
-              style: TextStyle(
-                  color: Colors.black,
-                  fontWeight: FontWeight.w500,
-                  fontSize: 16)),
-          const SizedBox(width: 10),
+              style: TextStyle(color: Colors.black, fontWeight: FontWeight.w600, fontSize: 16)),
+          const SizedBox(width: 24),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(color: Colors.grey[300]!),
             ),
-            child: const Text('Inbox',
-                style: TextStyle(
-                    color: Colors.black,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14)),
+            child: const Text('Resident',
+                style: TextStyle(color: Colors.black, fontSize: 14, fontWeight: FontWeight.w500)),
           ),
         ]),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: Center(
-              child: Text('Hello, $firstName',
-                  style: TextStyle(color: Colors.grey[700], fontSize: 14)),
-            ),
-          ),
-        ],
       ),
       body: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Padding(
