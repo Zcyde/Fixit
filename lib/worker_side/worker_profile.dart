@@ -1,13 +1,39 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../users_data/users_database.dart';
 import '../users_data/user_model.dart';
+import '../client_side/inbox_page.dart';
+import '../sign_in_page.dart';
+import 'worker_requests_page.dart';
+
+
+// Global in-memory portfolio store — persists across navigation within the same session
+class _PortfolioStore {
+  static final Map<String, List<XFile>> _photos = {};
+
+  static List<XFile> get(String userId) => _photos[userId] ?? [];
+
+  static void add(String userId, XFile photo) {
+    _photos.putIfAbsent(userId, () => []);
+    _photos[userId]!.add(photo);
+  }
+
+  static void remove(String userId, int index) {
+    if (_photos.containsKey(userId) && index < _photos[userId]!.length) {
+      _photos[userId]!.removeAt(index);
+    }
+  }
+}
 
 class WorkerProfilePage extends StatefulWidget {
   final User user;
+  final Set<String> myJobIds;
 
-  const WorkerProfilePage({Key? key, required this.user}) : super(key: key);
+  const WorkerProfilePage({Key? key, required this.user, Set<String>? myJobIds})
+      : myJobIds = myJobIds ?? const {},
+        super(key: key);
 
   @override
   State<WorkerProfilePage> createState() => _WorkerProfilePageState();
@@ -15,7 +41,6 @@ class WorkerProfilePage extends StatefulWidget {
 
 class _WorkerProfilePageState extends State<WorkerProfilePage> {
   final ImagePicker _picker = ImagePicker();
-  final List<String> _portfolioPhotos = [];
 
   Future<void> _addPhoto() async {
     final XFile? image = await _picker.pickImage(
@@ -23,7 +48,7 @@ class _WorkerProfilePageState extends State<WorkerProfilePage> {
       imageQuality: 80,
     );
     if (image != null) {
-      setState(() => _portfolioPhotos.add(image.path));
+      setState(() => _PortfolioStore.add(widget.user.id, image));
     }
   }
 
@@ -42,7 +67,7 @@ class _WorkerProfilePageState extends State<WorkerProfilePage> {
           ),
           ElevatedButton(
             onPressed: () {
-              setState(() => _portfolioPhotos.removeAt(index));
+              setState(() => _PortfolioStore.remove(widget.user.id, index));
               Navigator.pop(context);
             },
             style: ElevatedButton.styleFrom(
@@ -124,6 +149,19 @@ class _WorkerProfilePageState extends State<WorkerProfilePage> {
     );
   }
 
+  void _openPhotoViewer(BuildContext context, int startIndex) {
+    final photos = _PortfolioStore.get(widget.user.id);
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => _PortfolioViewer(
+          photos: photos,
+          initialIndex: startIndex,
+        ),
+      ),
+    );
+  }
+
   Widget _buildPortfolioSection() {
     return Column(
       children: [
@@ -131,7 +169,7 @@ class _WorkerProfilePageState extends State<WorkerProfilePage> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'Portfolio (${_portfolioPhotos.length})',
+              'Portfolio (${_PortfolioStore.get(widget.user.id).length})',
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             TextButton.icon(
@@ -142,7 +180,7 @@ class _WorkerProfilePageState extends State<WorkerProfilePage> {
           ],
         ),
         const SizedBox(height: 12),
-        if (_portfolioPhotos.isEmpty)
+        if (_PortfolioStore.get(widget.user.id).isEmpty)
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 40),
@@ -169,21 +207,35 @@ class _WorkerProfilePageState extends State<WorkerProfilePage> {
               crossAxisSpacing: 10,
               childAspectRatio: 1.0,
             ),
-            itemCount: _portfolioPhotos.length,
+            itemCount: _PortfolioStore.get(widget.user.id).length,
             itemBuilder: (context, index) {
               return Stack(
                 children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: Image.file(
-                      File(_portfolioPhotos[index]),
-                      width: double.infinity,
-                      height: double.infinity,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
-                        color: Colors.grey[300],
-                        child: Icon(Icons.broken_image, color: Colors.grey[500], size: 40),
-                      ),
+                  GestureDetector(
+                    onTap: () => _openPhotoViewer(context, index),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: kIsWeb
+                          ? Image.network(
+                              _PortfolioStore.get(widget.user.id)[index].path,
+                              width: double.infinity,
+                              height: double.infinity,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => Container(
+                                color: Colors.grey[300],
+                                child: Icon(Icons.broken_image, color: Colors.grey[500], size: 40),
+                              ),
+                            )
+                          : Image.file(
+                              File(_PortfolioStore.get(widget.user.id)[index].path),
+                              width: double.infinity,
+                              height: double.infinity,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => Container(
+                                color: Colors.grey[300],
+                                child: Icon(Icons.broken_image, color: Colors.grey[500], size: 40),
+                              ),
+                            ),
                     ),
                   ),
                   Positioned(
@@ -258,11 +310,44 @@ class _WorkerProfilePageState extends State<WorkerProfilePage> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () => Navigator.pop(context),
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      title: const Text('Sign Out', style: TextStyle(fontWeight: FontWeight.bold)),
+                      content: const Text('Are you sure you want to sign out?'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          child: Text('Cancel', style: TextStyle(color: Colors.grey[600])),
+                        ),
+                        ElevatedButton(
+                          onPressed: () {
+                            Navigator.pop(ctx);
+                            Navigator.pushAndRemoveUntil(
+                              context,
+                              MaterialPageRoute(builder: (_) => const SignInPage()),
+                              (route) => false,
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                          child: const Text('Sign Out'),
+                        ),
+                      ],
+                    ),
+                  );
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
-                  foregroundColor: Colors.black,
+                  foregroundColor: Colors.red,
                   elevation: 0,
+                  side: const BorderSide(color: Colors.red),
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
@@ -291,15 +376,36 @@ class _WorkerProfilePageState extends State<WorkerProfilePage> {
         selectedFontSize: 11,
         unselectedFontSize: 11,
         currentIndex: 3,
-        onTap: (index) {
+        onTap: (index) async {
           if (index == 3) return;
+          if (index == 1) {
+            await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => WorkerRequestsPage(
+                  worker: widget.user,
+                  myJobIds: widget.myJobIds,
+                ),
+              ),
+            );
+            return;
+          }
+          if (index == 2) {
+            await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => InboxPage(user: widget.user),
+              ),
+            );
+            return;
+          }
           Navigator.pop(context);
         },
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.grid_view_rounded), label: 'Dashboard'),
-          BottomNavigationBarItem(icon: Icon(Icons.build_outlined), label: 'Repair List'),
-          BottomNavigationBarItem(icon: Icon(Icons.mail_outline), label: 'Messages'),
-          BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Profile'),
+          const BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          const BottomNavigationBarItem(icon: Icon(Icons.assignment), label: 'Requests'),
+          const BottomNavigationBarItem(icon: Icon(Icons.inbox), label: 'Inbox'),
+          const BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
       ),
     );
@@ -511,6 +617,184 @@ class _WorkerEditProfilePageState extends State<_WorkerEditProfilePage> {
               ),
             ),
             const SizedBox(height: 40),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Full-screen portfolio image viewer ─────────────────────────────────────
+class _PortfolioViewer extends StatefulWidget {
+  final List<XFile> photos;
+  final int initialIndex;
+
+  const _PortfolioViewer({
+    required this.photos,
+    required this.initialIndex,
+  });
+
+  @override
+  State<_PortfolioViewer> createState() => _PortfolioViewerState();
+}
+
+class _PortfolioViewerState extends State<_PortfolioViewer> {
+  late PageController _pageController;
+  late int _currentIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex;
+    _pageController = PageController(initialPage: widget.initialIndex);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  Widget _buildPhoto(XFile photo) {
+    if (kIsWeb) {
+      return Image.network(
+        photo.path,
+        fit: BoxFit.contain,
+        errorBuilder: (_, __, ___) => const Center(
+          child: Icon(Icons.broken_image, color: Colors.white54, size: 60),
+        ),
+      );
+    }
+    return Image.file(
+      File(photo.path),
+      fit: BoxFit.contain,
+      errorBuilder: (_, __, ___) => const Center(
+        child: Icon(Icons.broken_image, color: Colors.white54, size: 60),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final total = widget.photos.length;
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: SafeArea(
+        child: Stack(
+          children: [
+            // Photo pager
+            PageView.builder(
+              controller: _pageController,
+              itemCount: total,
+              onPageChanged: (i) => setState(() => _currentIndex = i),
+              itemBuilder: (_, i) => InteractiveViewer(
+                minScale: 1.0,
+                maxScale: 4.0,
+                child: Center(child: _buildPhoto(widget.photos[i])),
+              ),
+            ),
+            // Top bar — close + counter
+            Positioned(
+              top: 0, left: 0, right: 0,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    IconButton(
+                      icon: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.5),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.close, color: Colors.white, size: 22),
+                      ),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.5),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        '${_currentIndex + 1} / $total',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 48),
+                  ],
+                ),
+              ),
+            ),
+            // Left arrow
+            if (total > 1 && _currentIndex > 0)
+              Positioned(
+                left: 8, top: 0, bottom: 0,
+                child: Center(
+                  child: GestureDetector(
+                    onTap: () => _pageController.previousPage(
+                      duration: const Duration(milliseconds: 250),
+                      curve: Curves.easeInOut,
+                    ),
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.45),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.chevron_left, color: Colors.white, size: 30),
+                    ),
+                  ),
+                ),
+              ),
+            // Right arrow
+            if (total > 1 && _currentIndex < total - 1)
+              Positioned(
+                right: 8, top: 0, bottom: 0,
+                child: Center(
+                  child: GestureDetector(
+                    onTap: () => _pageController.nextPage(
+                      duration: const Duration(milliseconds: 250),
+                      curve: Curves.easeInOut,
+                    ),
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.45),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.chevron_right, color: Colors.white, size: 30),
+                    ),
+                  ),
+                ),
+              ),
+            // Dot indicators
+            if (total > 1)
+              Positioned(
+                bottom: 24, left: 0, right: 0,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(total, (i) {
+                    final active = i == _currentIndex;
+                    return AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      margin: const EdgeInsets.symmetric(horizontal: 4),
+                      width: active ? 20 : 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: active ? Colors.white : Colors.white38,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    );
+                  }),
+                ),
+              ),
           ],
         ),
       ),

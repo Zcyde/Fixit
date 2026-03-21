@@ -375,7 +375,7 @@ class _ClientRequestEditPageState extends State<ClientRequestEditPage> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          _isEditing ? 'Edit Request' : 'Request edit',
+          _isEditing ? 'Edit Request' : 'Create Request',
           style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w600, fontSize: 18),
         ),
         actions: [

@@ -19,19 +19,14 @@ class WorkRequestDetailsPage extends StatelessWidget {
   }) : super(key: key);
 
   void _handleAccept(BuildContext context) {
-    // Store both status AND the worker's ID so it survives logout/login
-    final updated = request.copyWith(
-      status: 'in_progress',
-      workerId: worker?.id,
-      workerName: worker?.name,
-    );
+    final updated = request.copyWith(status: 'in_progress');
     RequestsDatabase.updateRequest(updated);
     if (onAccept != null) onAccept!();
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Offer Accepted! Job is now in progress.'),
-        backgroundColor: Color(0xFF21A366),
+        backgroundColor: const Color(0xFF2D7A5E),
       ),
     );
 
@@ -252,6 +247,7 @@ class WorkRequestDetailsPage extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 20),
+                      // Location Section
                       Row(
                         children: [
                           const Icon(
@@ -272,6 +268,7 @@ class WorkRequestDetailsPage extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 12),
+                      // Budget Section
                       Row(
                         children: [
                           const Icon(
@@ -291,6 +288,7 @@ class WorkRequestDetailsPage extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 12),
+                      // Payment Method Section (Newly Added)
                       Row(
                         children: [
                           const Icon(
@@ -300,7 +298,7 @@ class WorkRequestDetailsPage extends StatelessWidget {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            'Payment: ${request.paymentMethod}',
+                            'Payment: ${request.paymentMethod ?? "Not specified"}',
                             style: const TextStyle(
                               fontSize: 14,
                               color: Colors.black87,
@@ -332,8 +330,8 @@ class WorkRequestDetailsPage extends StatelessWidget {
                             child: ElevatedButton(
                               onPressed: () => Navigator.pop(context),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFFC62828),
-                                foregroundColor: Colors.white,
+                                backgroundColor: Colors.grey[200],
+                                foregroundColor: Colors.black87,
                                 elevation: 0,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8),
@@ -341,7 +339,7 @@ class WorkRequestDetailsPage extends StatelessWidget {
                                 padding: const EdgeInsets.symmetric(vertical: 14),
                               ),
                               child: const Text(
-                                'Cancel Task',
+                                'Go Back',
                                 style: TextStyle(fontWeight: FontWeight.bold),
                               ),
                             ),
@@ -351,7 +349,7 @@ class WorkRequestDetailsPage extends StatelessWidget {
                             child: ElevatedButton(
                               onPressed: () => _handleAccept(context),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF21A366),
+                                backgroundColor: const Color(0xFF2D7A5E),
                                 foregroundColor: Colors.white,
                                 elevation: 0,
                                 shape: RoundedRectangleBorder(
@@ -360,7 +358,7 @@ class WorkRequestDetailsPage extends StatelessWidget {
                                 padding: const EdgeInsets.symmetric(vertical: 14),
                               ),
                               child: const Text(
-                                'Accept Offer',
+                                'Accept Job',
                                 style: TextStyle(fontWeight: FontWeight.bold),
                               ),
                             ),

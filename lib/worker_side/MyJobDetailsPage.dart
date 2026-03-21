@@ -289,7 +289,7 @@ class _MyJobDetailsPageState extends State<MyJobDetailsPage> {
               child: ElevatedButton(
                 onPressed: _markAsDone,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blueGrey,
+                  backgroundColor: const Color(0xFF2D7A5E),
                   foregroundColor: Colors.white,
                   elevation: 0,
                   padding: const EdgeInsets.symmetric(vertical: 16),

@@ -9,6 +9,7 @@ import '../users_data/users_database.dart';
 import '../api/review_model.dart';
 import '../api/review_api_service.dart';
 import '../requests_data/messages_database.dart';
+import 'reviews_list_page.dart';
 
 class ClientHomePage extends StatefulWidget {
   final User user;
@@ -362,7 +363,8 @@ class _ClientHomePageState extends State<ClientHomePage> {
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
           IconButton(
               icon: const Icon(Icons.arrow_forward),
-              onPressed: _reviews.isNotEmpty ? _showAllReviewsModal : null),
+              onPressed: () => Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => const ReviewsListPage()))),
         ]),
         const SizedBox(height: 16),
         if (_isLoadingReviews)
