@@ -8,7 +8,8 @@ class Request {
   final List<String> imagePaths;
   final DateTime createdAt;
   final String? workerName;
-  
+  final String? workerId;
+
   final String userId;
   final String userName;
   final String userEmail;
@@ -18,8 +19,8 @@ class Request {
   final String? userCity;
   final String? userBarangay;
   final String? userAddress;
-  final String paymentMethod; 
-  
+  final String paymentMethod;
+
   String status;
 
   Request({
@@ -43,6 +44,7 @@ class Request {
     this.userAddress,
     this.status = 'pending',
     this.workerName,
+    this.workerId,
   });
 
   Request copyWith({
@@ -66,6 +68,7 @@ class Request {
     String? status,
     String? paymentMethod,
     String? workerName,
+    String? workerId,
   }) {
     return Request(
       id: id ?? this.id,
@@ -88,36 +91,26 @@ class Request {
       status: status ?? this.status,
       paymentMethod: paymentMethod ?? this.paymentMethod,
       workerName: workerName ?? this.workerName,
+      workerId: workerId ?? this.workerId,
     );
   }
 
   String get priorityColor {
     switch (priority.toLowerCase()) {
-      case 'urgent':
-        return 'red';
-      case 'high':
-        return 'orange';
-      case 'medium':
-        return 'yellow';
-      case 'low':
-        return 'green';
-      default:
-        return 'grey';
+      case 'urgent': return 'red';
+      case 'high': return 'orange';
+      case 'medium': return 'yellow';
+      case 'low': return 'green';
+      default: return 'grey';
     }
   }
 
   String get timeAgo {
     final now = DateTime.now();
     final difference = now.difference(createdAt);
-
-    if (difference.inDays > 0) {
-      return '${difference.inDays}d ago';
-    } else if (difference.inHours > 0) {
-      return '${difference.inHours}h ago';
-    } else if (difference.inMinutes > 0) {
-      return '${difference.inMinutes}m ago';
-    } else {
-      return 'Just now';
-    }
+    if (difference.inDays > 0) return '${difference.inDays}d ago';
+    if (difference.inHours > 0) return '${difference.inHours}h ago';
+    if (difference.inMinutes > 0) return '${difference.inMinutes}m ago';
+    return 'Just now';
   }
 }

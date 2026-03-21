@@ -19,16 +19,18 @@ class WorkRequestDetailsPage extends StatelessWidget {
   }) : super(key: key);
 
   void _handleAccept(BuildContext context) {
-    final updated = request.copyWith(status: 'in_progress');
+    final updated = request.copyWith(
+      status: 'in_progress',
+      workerId: worker?.id,
+      workerName: worker?.name,
+    );
     RequestsDatabase.updateRequest(updated);
     if (onAccept != null) onAccept!();
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Offer Accepted! Job is now in progress.'),
-        backgroundColor: const Color(0xFF2D7A5E),
-      ),
-    );
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+      content: Text('Offer Accepted! Job is now in progress.'),
+      backgroundColor: Color(0xFF2D7A5E),
+    ));
 
     Navigator.pushReplacement(
       context,
@@ -40,73 +42,41 @@ class WorkRequestDetailsPage extends StatelessWidget {
 
   void _showFullscreenImageViewer(BuildContext context) {
     if (request.imagePaths.isEmpty) return;
-
-    final images = request.imagePaths;
-
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => _WorkerImageViewer(images: images)),
+      MaterialPageRoute(builder: (_) => _WorkerImageViewer(images: request.imagePaths)),
     );
   }
 
   Widget _buildRequestImage() {
-    if (request.imagePaths.isEmpty) {
-      return _imagePlaceholder();
-    }
-
+    if (request.imagePaths.isEmpty) return _imagePlaceholder();
     final path = request.imagePaths.first;
-
     if (path.startsWith('assets/')) {
-      return Image.asset(
-        path,
-        width: double.infinity,
-        height: 220,
-        fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => _imagePlaceholder(),
-      );
+      return Image.asset(path, width: double.infinity, height: 220, fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => _imagePlaceholder());
     }
-
     if (kIsWeb || path.startsWith('http')) {
-      return Image.network(
-        path,
-        width: double.infinity,
-        height: 220,
-        fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => _imagePlaceholder(),
-      );
+      return Image.network(path, width: double.infinity, height: 220, fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => _imagePlaceholder());
     }
-
-    return Image.file(
-      File(path),
-      width: double.infinity,
-      height: 220,
-      fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) => _imagePlaceholder(),
-    );
+    return Image.file(File(path), width: double.infinity, height: 220, fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => _imagePlaceholder());
   }
 
-  Widget _imagePlaceholder() {
-    return Container(
-      width: double.infinity,
-      height: 220,
-      color: Colors.grey[300],
-      child: const Icon(Icons.construction, color: Colors.white, size: 40),
-    );
-  }
+  Widget _imagePlaceholder() => Container(
+    width: double.infinity,
+    height: 220,
+    color: Colors.grey[300],
+    child: const Icon(Icons.construction, color: Colors.white, size: 40),
+  );
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFE8F5F1),
       appBar: AppBar(
-        title: const Text(
-          'Request Details',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-            color: Colors.black,
-          ),
-        ),
+        title: const Text('Request Details',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.black)),
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
@@ -120,9 +90,7 @@ class WorkRequestDetailsPage extends StatelessWidget {
           child: Column(
             children: [
               Card(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 elevation: 4,
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
@@ -130,199 +98,105 @@ class WorkRequestDetailsPage extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Column(
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Stack(
+                          children: [
+                            SizedBox(
+                              width: double.infinity,
+                              height: 220,
+                              child: _buildRequestImage(),
+                            ),
+                            Positioned(
+                              right: 12,
+                              bottom: 12,
+                              child: ElevatedButton.icon(
+                                onPressed: () => _showFullscreenImageViewer(context),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.black87,
+                                  foregroundColor: Colors.white,
+                                  elevation: 0,
+                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                                ),
+                                icon: const Icon(Icons.fullscreen, size: 16),
+                                label: const Text('View',
+                                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: Stack(
-                              children: [
-                                SizedBox(
-                                  width: double.infinity,
-                                  height: 220,
-                                  child: _buildRequestImage(),
-                                ),
-                                Positioned(
-                                  right: 12,
-                                  bottom: 12,
-                                  child: ElevatedButton.icon(
-                                    onPressed: () =>
-                                        _showFullscreenImageViewer(context),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.black87,
-                                      foregroundColor: Colors.white,
-                                      elevation: 0,
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 14,
-                                        vertical: 10,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(24),
-                                      ),
-                                    ),
-                                    icon: const Icon(Icons.fullscreen, size: 16),
-                                    label: const Text(
-                                      'View',
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
+                          Expanded(
+                            child: Text(request.title,
+                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
                           ),
-                          const SizedBox(height: 16),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  request.title,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 20,
-                                  ),
-                                ),
-                              ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: Colors.grey[300]!),
-                                ),
-                                child: const Text(
-                                  'Active',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.calendar_today,
-                                size: 14,
-                                color: Colors.black54,
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                'Jan 28',
-                                style: TextStyle(
-                                  color: Colors.black54,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
                           Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 6,
-                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                             decoration: BoxDecoration(
-                              color: Colors.red,
-                              borderRadius: BorderRadius.circular(20),
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.grey[300]!),
                             ),
-                            child: const Text(
-                              'High',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                            child: const Text('Active', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500)),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 20),
-                      // Location Section
+                      const SizedBox(height: 8),
                       Row(
                         children: [
-                          const Icon(
-                            Icons.location_on_outlined,
-                            size: 20,
-                            color: Colors.black87,
-                          ),
+                          const Icon(Icons.calendar_today, size: 14, color: Colors.black54),
+                          const SizedBox(width: 6),
+                          Text('Jan 28', style: TextStyle(color: Colors.black54, fontSize: 13)),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                        decoration: BoxDecoration(color: Colors.red, borderRadius: BorderRadius.circular(20)),
+                        child: const Text('High',
+                            style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                      ),
+                      const SizedBox(height: 20),
+                      Row(
+                        children: [
+                          const Icon(Icons.location_on_outlined, size: 20, color: Colors.black87),
                           const SizedBox(width: 8),
                           Expanded(
-                            child: Text(
-                              request.userAddress ?? 'Angeles City, Pampanga',
-                              style: const TextStyle(
-                                fontSize: 14,
-                                color: Colors.black87,
-                              ),
-                            ),
+                            child: Text(request.userAddress ?? 'Angeles City, Pampanga',
+                                style: const TextStyle(fontSize: 14, color: Colors.black87)),
                           ),
                         ],
                       ),
                       const SizedBox(height: 12),
-                      // Budget Section
                       Row(
                         children: [
-                          const Icon(
-                            Icons.shopping_bag_outlined,
-                            size: 20,
-                            color: Colors.black87,
-                          ),
+                          const Icon(Icons.shopping_bag_outlined, size: 20, color: Colors.black87),
                           const SizedBox(width: 8),
-                          Text(
-                            'PHP ${request.budget}',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 15,
-                              color: Colors.black87,
-                            ),
-                          ),
+                          Text('PHP ${request.budget}',
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.black87)),
                         ],
                       ),
                       const SizedBox(height: 12),
-                      // Payment Method Section (Newly Added)
                       Row(
                         children: [
-                          const Icon(
-                            Icons.payments_outlined,
-                            size: 20,
-                            color: Colors.black87,
-                          ),
+                          const Icon(Icons.payments_outlined, size: 20, color: Colors.black87),
                           const SizedBox(width: 8),
-                          Text(
-                            'Payment: ${request.paymentMethod ?? "Not specified"}',
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: Colors.black87,
-                            ),
-                          ),
+                          Text('Payment: ${request.paymentMethod}',
+                              style: const TextStyle(fontSize: 14, color: Colors.black87)),
                         ],
                       ),
                       const SizedBox(height: 20),
-                      const Text(
-                        'Description:',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                        ),
-                      ),
+                      const Text('Description:',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
                       const SizedBox(height: 6),
-                      Text(
-                        request.description,
-                        style: TextStyle(
-                          color: Colors.grey[700],
-                          height: 1.4,
-                          fontSize: 13,
-                        ),
-                      ),
+                      Text(request.description,
+                          style: TextStyle(color: Colors.grey[700], height: 1.4, fontSize: 13)),
                       const SizedBox(height: 24),
                       Row(
                         children: [
@@ -333,15 +207,10 @@ class WorkRequestDetailsPage extends StatelessWidget {
                                 backgroundColor: Colors.grey[200],
                                 foregroundColor: Colors.black87,
                                 elevation: 0,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                 padding: const EdgeInsets.symmetric(vertical: 14),
                               ),
-                              child: const Text(
-                                'Go Back',
-                                style: TextStyle(fontWeight: FontWeight.bold),
-                              ),
+                              child: const Text('Go Back', style: TextStyle(fontWeight: FontWeight.bold)),
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -352,15 +221,10 @@ class WorkRequestDetailsPage extends StatelessWidget {
                                 backgroundColor: const Color(0xFF2D7A5E),
                                 foregroundColor: Colors.white,
                                 elevation: 0,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                 padding: const EdgeInsets.symmetric(vertical: 14),
                               ),
-                              child: const Text(
-                                'Accept Job',
-                                style: TextStyle(fontWeight: FontWeight.bold),
-                              ),
+                              child: const Text('Accept Job', style: TextStyle(fontWeight: FontWeight.bold)),
                             ),
                           ),
                         ],
@@ -379,7 +243,6 @@ class WorkRequestDetailsPage extends StatelessWidget {
 
 class _WorkerImageViewer extends StatefulWidget {
   final List<String> images;
-
   const _WorkerImageViewer({required this.images});
 
   @override
@@ -390,21 +253,14 @@ class _WorkerImageViewerState extends State<_WorkerImageViewer> {
   int currentIndex = 0;
 
   Widget _buildViewerImage(String path) {
-    if (path.startsWith('assets/')) {
-      return Image.asset(path, fit: BoxFit.contain);
-    }
-
-    if (kIsWeb || path.startsWith('http')) {
-      return Image.network(path, fit: BoxFit.contain);
-    }
-
+    if (path.startsWith('assets/')) return Image.asset(path, fit: BoxFit.contain);
+    if (kIsWeb || path.startsWith('http')) return Image.network(path, fit: BoxFit.contain);
     return Image.file(File(path), fit: BoxFit.contain);
   }
 
   @override
   Widget build(BuildContext context) {
     final currentImage = widget.images[currentIndex];
-
     return Scaffold(
       backgroundColor: Colors.black,
       body: SafeArea(
@@ -422,14 +278,8 @@ class _WorkerImageViewerState extends State<_WorkerImageViewer> {
                     ),
                   ),
                   const Spacer(),
-                  Text(
-                    '${currentIndex + 1}/${widget.images.length}',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  Text('${currentIndex + 1}/${widget.images.length}',
+                      style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
                   const Spacer(),
                   const SizedBox(width: 40),
                 ],
@@ -454,7 +304,6 @@ class _WorkerImageViewerState extends State<_WorkerImageViewer> {
                   itemBuilder: (context, index) {
                     final path = widget.images[index];
                     final isSelected = index == currentIndex;
-
                     Widget thumb;
                     if (path.startsWith('assets/')) {
                       thumb = Image.asset(path, fit: BoxFit.cover);
@@ -463,13 +312,8 @@ class _WorkerImageViewerState extends State<_WorkerImageViewer> {
                     } else {
                       thumb = Image.file(File(path), fit: BoxFit.cover);
                     }
-
                     return GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          currentIndex = index;
-                        });
-                      },
+                      onTap: () => setState(() => currentIndex = index),
                       child: Container(
                         width: 90,
                         margin: const EdgeInsets.symmetric(horizontal: 6),
@@ -480,10 +324,7 @@ class _WorkerImageViewerState extends State<_WorkerImageViewer> {
                           ),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: thumb,
-                        ),
+                        child: ClipRRect(borderRadius: BorderRadius.circular(8), child: thumb),
                       ),
                     );
                   },

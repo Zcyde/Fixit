@@ -4,22 +4,18 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../users_data/users_database.dart';
 import '../users_data/user_model.dart';
-import '../client_side/inbox_page.dart';
+import '../requests_data/messages_database.dart';
 import '../sign_in_page.dart';
+import 'worker_inbox_page.dart';
 import 'worker_requests_page.dart';
 
-
-// Global in-memory portfolio store — persists across navigation within the same session
 class _PortfolioStore {
   static final Map<String, List<XFile>> _photos = {};
-
   static List<XFile> get(String userId) => _photos[userId] ?? [];
-
   static void add(String userId, XFile photo) {
     _photos.putIfAbsent(userId, () => []);
     _photos[userId]!.add(photo);
   }
-
   static void remove(String userId, int index) {
     if (_photos.containsKey(userId) && index < _photos[userId]!.length) {
       _photos[userId]!.removeAt(index);
@@ -29,11 +25,8 @@ class _PortfolioStore {
 
 class WorkerProfilePage extends StatefulWidget {
   final User user;
-  final Set<String> myJobIds;
 
-  const WorkerProfilePage({Key? key, required this.user, Set<String>? myJobIds})
-      : myJobIds = myJobIds ?? const {},
-        super(key: key);
+  const WorkerProfilePage({Key? key, required this.user}) : super(key: key);
 
   @override
   State<WorkerProfilePage> createState() => _WorkerProfilePageState();
@@ -43,13 +36,8 @@ class _WorkerProfilePageState extends State<WorkerProfilePage> {
   final ImagePicker _picker = ImagePicker();
 
   Future<void> _addPhoto() async {
-    final XFile? image = await _picker.pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 80,
-    );
-    if (image != null) {
-      setState(() => _PortfolioStore.add(widget.user.id, image));
-    }
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+    if (image != null) setState(() => _PortfolioStore.add(widget.user.id, image));
   }
 
   void _deletePhoto(int index) {
@@ -131,8 +119,7 @@ class _WorkerProfilePageState extends State<WorkerProfilePage> {
                 ).then((_) => setState(() {}));
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Incorrect password'), backgroundColor: Colors.red),
-                );
+                    const SnackBar(content: Text('Incorrect password'), backgroundColor: Colors.red));
               }
             },
             style: ElevatedButton.styleFrom(
@@ -153,12 +140,7 @@ class _WorkerProfilePageState extends State<WorkerProfilePage> {
     final photos = _PortfolioStore.get(widget.user.id);
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => _PortfolioViewer(
-          photos: photos,
-          initialIndex: startIndex,
-        ),
-      ),
+      MaterialPageRoute(builder: (_) => _PortfolioViewer(photos: photos, initialIndex: startIndex)),
     );
   }
 
@@ -168,10 +150,8 @@ class _WorkerProfilePageState extends State<WorkerProfilePage> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              'Portfolio (${_PortfolioStore.get(widget.user.id).length})',
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
+            Text('Portfolio (${_PortfolioStore.get(widget.user.id).length})',
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             TextButton.icon(
               onPressed: _addPhoto,
               icon: const Icon(Icons.add, size: 18, color: Colors.black),
@@ -189,11 +169,9 @@ class _WorkerProfilePageState extends State<WorkerProfilePage> {
               children: [
                 Icon(Icons.photo_library_outlined, size: 48, color: Colors.grey[400]),
                 const SizedBox(height: 10),
-                Text(
-                  'No portfolio photos yet.\nTap "Add" to upload your work.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.grey[500], fontSize: 13),
-                ),
+                Text('No portfolio photos yet.\nTap "Add" to upload your work.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.grey[500], fontSize: 13)),
               ],
             ),
           )
@@ -261,28 +239,53 @@ class _WorkerProfilePageState extends State<WorkerProfilePage> {
   @override
   Widget build(BuildContext context) {
     final currentUser = UsersDatabase.getUserById(widget.user.id) ?? widget.user;
+    final int unread = MessagesDatabase.totalUnreadFor(widget.user.id);
 
     return Scaffold(
       backgroundColor: const Color(0xFFD9F2E6),
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: const Color(0xFFE8F5F1),
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black54),
-          onPressed: () => Navigator.pop(context),
-        ),
+        automaticallyImplyLeading: false,
+        title: const Text('Profile',
+            style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 17)),
+        actions: [
+          Container(
+            margin: const EdgeInsets.only(right: 14, top: 10, bottom: 10),
+            child: ElevatedButton(
+              onPressed: () => Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (_) => const SignInPage()),
+                (route) => false,
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: Colors.red,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                  side: const BorderSide(color: Colors.red),
+                ),
+              ),
+              child: const Text('Logout', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+            ),
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 24),
         child: Column(
           children: [
+            const SizedBox(height: 16),
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(20),
-                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))],
+                boxShadow: [
+                  BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4)),
+                ],
               ),
               child: Column(
                 children: [
@@ -306,112 +309,53 @@ class _WorkerProfilePageState extends State<WorkerProfilePage> {
             ),
             const SizedBox(height: 24),
             _buildPortfolioSection(),
-            const SizedBox(height: 32),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  showDialog(
-                    context: context,
-                    builder: (ctx) => AlertDialog(
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      title: const Text('Sign Out', style: TextStyle(fontWeight: FontWeight.bold)),
-                      content: const Text('Are you sure you want to sign out?'),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(ctx),
-                          child: Text('Cancel', style: TextStyle(color: Colors.grey[600])),
-                        ),
-                        ElevatedButton(
-                          onPressed: () {
-                            Navigator.pop(ctx);
-                            Navigator.pushAndRemoveUntil(
-                              context,
-                              MaterialPageRoute(builder: (_) => const SignInPage()),
-                              (route) => false,
-                            );
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red,
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                          ),
-                          child: const Text('Sign Out'),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: Colors.red,
-                  elevation: 0,
-                  side: const BorderSide(color: Colors.red),
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                child: const Text('Sign Out', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-              ),
-            ),
             const SizedBox(height: 100),
           ],
         ),
       ),
-      bottomNavigationBar: _buildBottomNav(),
-    );
-  }
-
-  Widget _buildBottomNav() {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF2D7A5E),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.12), blurRadius: 8, offset: const Offset(0, -2))],
-      ),
-      child: BottomNavigationBar(
+      bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         backgroundColor: const Color(0xFF2D7A5E),
         selectedItemColor: Colors.white,
         unselectedItemColor: Colors.white70,
-        selectedFontSize: 11,
-        unselectedFontSize: 11,
         currentIndex: 3,
         onTap: (index) async {
           if (index == 3) return;
+          if (index == 0) { Navigator.popUntil(context, (route) => route.isFirst); return; }
           if (index == 1) {
             await Navigator.push(
               context,
-              MaterialPageRoute(
-                builder: (_) => WorkerRequestsPage(
-                  worker: widget.user,
-                  myJobIds: widget.myJobIds,
-                ),
-              ),
+              MaterialPageRoute(builder: (_) => WorkerRequestsPage(worker: widget.user)),
             );
+            if (mounted) setState(() {});
             return;
           }
           if (index == 2) {
             await Navigator.push(
               context,
-              MaterialPageRoute(
-                builder: (_) => InboxPage(user: widget.user),
-              ),
+              MaterialPageRoute(builder: (_) => WorkerInboxPage(worker: widget.user)),
             );
-            return;
+            if (mounted) setState(() {});
           }
-          Navigator.pop(context);
         },
-        items: const [
+        items: [
           const BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           const BottomNavigationBarItem(icon: Icon(Icons.assignment), label: 'Requests'),
-          const BottomNavigationBarItem(icon: Icon(Icons.inbox), label: 'Inbox'),
+          BottomNavigationBarItem(
+            icon: Badge(
+              label: Text('$unread'),
+              isLabelVisible: unread > 0,
+              backgroundColor: Colors.red,
+              child: const Icon(Icons.inbox),
+            ),
+            label: 'Inbox',
+          ),
           const BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
       ),
     );
   }
 }
-
 
 class _WorkerEditProfilePage extends StatefulWidget {
   final User user;
@@ -458,8 +402,7 @@ class _WorkerEditProfilePageState extends State<_WorkerEditProfilePage> {
     if (newPassword.isNotEmpty || confirmPassword.isNotEmpty) {
       if (newPassword != confirmPassword) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Passwords do not match'), backgroundColor: Colors.red),
-        );
+            const SnackBar(content: Text('Passwords do not match'), backgroundColor: Colors.red));
         return;
       }
     }
@@ -472,18 +415,15 @@ class _WorkerEditProfilePageState extends State<_WorkerEditProfilePage> {
     );
 
     final success = UsersDatabase.updateUser(updatedUser);
-
     if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Profile updated!'), backgroundColor: Colors.green, duration: Duration(seconds: 1)),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Profile updated!'), backgroundColor: Colors.green, duration: Duration(seconds: 1)));
       Future.delayed(const Duration(seconds: 1), () {
         if (mounted) Navigator.pop(context);
       });
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to update profile'), backgroundColor: Colors.red),
-      );
+          const SnackBar(content: Text('Failed to update profile'), backgroundColor: Colors.red));
     }
   }
 
@@ -567,7 +507,9 @@ class _WorkerEditProfilePageState extends State<_WorkerEditProfilePage> {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(20),
-                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))],
+                boxShadow: [
+                  BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4)),
+                ],
               ),
               child: Column(
                 children: [
@@ -624,15 +566,11 @@ class _WorkerEditProfilePageState extends State<_WorkerEditProfilePage> {
   }
 }
 
-// ── Full-screen portfolio image viewer ─────────────────────────────────────
 class _PortfolioViewer extends StatefulWidget {
   final List<XFile> photos;
   final int initialIndex;
 
-  const _PortfolioViewer({
-    required this.photos,
-    required this.initialIndex,
-  });
+  const _PortfolioViewer({required this.photos, required this.initialIndex});
 
   @override
   State<_PortfolioViewer> createState() => _PortfolioViewerState();
@@ -657,21 +595,11 @@ class _PortfolioViewerState extends State<_PortfolioViewer> {
 
   Widget _buildPhoto(XFile photo) {
     if (kIsWeb) {
-      return Image.network(
-        photo.path,
-        fit: BoxFit.contain,
-        errorBuilder: (_, __, ___) => const Center(
-          child: Icon(Icons.broken_image, color: Colors.white54, size: 60),
-        ),
-      );
+      return Image.network(photo.path, fit: BoxFit.contain,
+          errorBuilder: (_, __, ___) => const Center(child: Icon(Icons.broken_image, color: Colors.white54, size: 60)));
     }
-    return Image.file(
-      File(photo.path),
-      fit: BoxFit.contain,
-      errorBuilder: (_, __, ___) => const Center(
-        child: Icon(Icons.broken_image, color: Colors.white54, size: 60),
-      ),
-    );
+    return Image.file(File(photo.path), fit: BoxFit.contain,
+        errorBuilder: (_, __, ___) => const Center(child: Icon(Icons.broken_image, color: Colors.white54, size: 60)));
   }
 
   @override
@@ -682,7 +610,6 @@ class _PortfolioViewerState extends State<_PortfolioViewer> {
       body: SafeArea(
         child: Stack(
           children: [
-            // Photo pager
             PageView.builder(
               controller: _pageController,
               itemCount: total,
@@ -693,7 +620,6 @@ class _PortfolioViewerState extends State<_PortfolioViewer> {
                 child: Center(child: _buildPhoto(widget.photos[i])),
               ),
             ),
-            // Top bar — close + counter
             Positioned(
               top: 0, left: 0, right: 0,
               child: Padding(
@@ -704,10 +630,7 @@ class _PortfolioViewerState extends State<_PortfolioViewer> {
                     IconButton(
                       icon: Container(
                         padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.5),
-                          shape: BoxShape.circle,
-                        ),
+                        decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.5), shape: BoxShape.circle),
                         child: const Icon(Icons.close, color: Colors.white, size: 22),
                       ),
                       onPressed: () => Navigator.pop(context),
@@ -715,66 +638,49 @@ class _PortfolioViewerState extends State<_PortfolioViewer> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.5),
+                        color: Colors.black.withValues(alpha: 0.5),
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      child: Text(
-                        '${_currentIndex + 1} / $total',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                      child: Text('${_currentIndex + 1} / $total',
+                          style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
                     ),
                     const SizedBox(width: 48),
                   ],
                 ),
               ),
             ),
-            // Left arrow
             if (total > 1 && _currentIndex > 0)
               Positioned(
                 left: 8, top: 0, bottom: 0,
                 child: Center(
                   child: GestureDetector(
                     onTap: () => _pageController.previousPage(
-                      duration: const Duration(milliseconds: 250),
-                      curve: Curves.easeInOut,
-                    ),
+                        duration: const Duration(milliseconds: 250), curve: Curves.easeInOut),
                     child: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.45),
-                        shape: BoxShape.circle,
-                      ),
+                          color: Colors.black.withValues(alpha: 0.45), shape: BoxShape.circle),
                       child: const Icon(Icons.chevron_left, color: Colors.white, size: 30),
                     ),
                   ),
                 ),
               ),
-            // Right arrow
             if (total > 1 && _currentIndex < total - 1)
               Positioned(
                 right: 8, top: 0, bottom: 0,
                 child: Center(
                   child: GestureDetector(
                     onTap: () => _pageController.nextPage(
-                      duration: const Duration(milliseconds: 250),
-                      curve: Curves.easeInOut,
-                    ),
+                        duration: const Duration(milliseconds: 250), curve: Curves.easeInOut),
                     child: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.45),
-                        shape: BoxShape.circle,
-                      ),
+                          color: Colors.black.withValues(alpha: 0.45), shape: BoxShape.circle),
                       child: const Icon(Icons.chevron_right, color: Colors.white, size: 30),
                     ),
                   ),
                 ),
               ),
-            // Dot indicators
             if (total > 1)
               Positioned(
                 bottom: 24, left: 0, right: 0,

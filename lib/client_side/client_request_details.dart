@@ -10,15 +10,10 @@ class ClientRequestDetailsPage extends StatefulWidget {
   final User user;
   final Request request;
 
-  const ClientRequestDetailsPage({
-    Key? key,
-    required this.user,
-    required this.request,
-  }) : super(key: key);
+  const ClientRequestDetailsPage({Key? key, required this.user, required this.request}) : super(key: key);
 
   @override
-  State<ClientRequestDetailsPage> createState() =>
-      _ClientRequestDetailsPageState();
+  State<ClientRequestDetailsPage> createState() => _ClientRequestDetailsPageState();
 }
 
 class _ClientRequestDetailsPageState extends State<ClientRequestDetailsPage> {
@@ -32,72 +27,42 @@ class _ClientRequestDetailsPageState extends State<ClientRequestDetailsPage> {
 
   void _refreshRequest() {
     final updated = RequestsDatabase.getRequestById(_request.id);
-    if (updated != null) {
-      setState(() {
-        _request = updated;
-      });
-    }
+    if (updated != null) setState(() => _request = updated);
   }
 
   Color _getPriorityColor(String priority) {
     switch (priority.toLowerCase()) {
       case 'urgent':
-      case 'high':
-        return Colors.red;
-      case 'medium':
-        return Colors.orange;
-      case 'low':
-        return Colors.green;
-      default:
-        return Colors.grey;
+      case 'high': return Colors.red;
+      case 'medium': return Colors.orange;
+      case 'low': return Colors.green;
+      default: return Colors.grey;
     }
   }
 
   String _formatStatus(String status) {
     switch (status.toLowerCase()) {
-      case 'pending':
-        return 'Pending';
-      case 'in_progress':
-        return 'In Progress';
-      case 'completed':
-        return 'Completed';
-      case 'cancelled':
-        return 'Cancelled';
-      default:
-        return status;
+      case 'pending': return 'Pending';
+      case 'in_progress': return 'In Progress';
+      case 'completed': return 'Completed';
+      case 'cancelled': return 'Cancelled';
+      default: return status;
     }
   }
 
   Widget _buildImage(String imagePath, {BoxFit fit = BoxFit.cover}) {
     if (kIsWeb) {
-      return Image.network(
-        imagePath,
-        fit: fit,
-        errorBuilder: (_, __, ___) => const Center(
-          child: Icon(Icons.broken_image, color: Colors.grey, size: 40),
-        ),
-      );
+      return Image.network(imagePath, fit: fit,
+          errorBuilder: (_, __, ___) => const Center(child: Icon(Icons.broken_image, color: Colors.grey, size: 40)));
     } else {
-      return Image.file(
-        File(imagePath),
-        fit: fit,
-        errorBuilder: (_, __, ___) => const Center(
-          child: Icon(Icons.broken_image, color: Colors.grey, size: 40),
-        ),
-      );
+      return Image.file(File(imagePath), fit: fit,
+          errorBuilder: (_, __, ___) => const Center(child: Icon(Icons.broken_image, color: Colors.grey, size: 40)));
     }
   }
 
   void _openImageViewer(int startIndex) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => _ImageViewerPage(
-          imagePaths: _request.imagePaths,
-          initialIndex: startIndex,
-        ),
-      ),
-    );
+    Navigator.push(context,
+        MaterialPageRoute(builder: (_) => _ImageViewerPage(imagePaths: _request.imagePaths, initialIndex: startIndex)));
   }
 
   Widget _buildPhotoSection() {
@@ -107,23 +72,13 @@ class _ClientRequestDetailsPageState extends State<ClientRequestDetailsPage> {
       return Container(
         width: double.infinity,
         height: 200,
-        decoration: BoxDecoration(
-          color: Colors.grey[300],
-          borderRadius: BorderRadius.circular(12),
-        ),
+        decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(12)),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(Icons.camera_alt, size: 40, color: Colors.grey[500]),
             const SizedBox(height: 8),
-            Text(
-              'PHOTO AREA',
-              style: TextStyle(
-                color: Colors.grey[600],
-                fontWeight: FontWeight.w500,
-                letterSpacing: 1.2,
-              ),
-            ),
+            Text('PHOTO AREA', style: TextStyle(color: Colors.grey[600], fontWeight: FontWeight.w500, letterSpacing: 1.2)),
           ],
         ),
       );
@@ -139,14 +94,8 @@ class _ClientRequestDetailsPageState extends State<ClientRequestDetailsPage> {
               Container(
                 width: double.infinity,
                 height: 220,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: _buildImage(paths[0]),
-                ),
+                decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(12)),
+                child: ClipRRect(borderRadius: BorderRadius.circular(12), child: _buildImage(paths[0])),
               ),
               Positioned(
                 bottom: 10,
@@ -154,22 +103,13 @@ class _ClientRequestDetailsPageState extends State<ClientRequestDetailsPage> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.55),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
+                      color: Colors.black.withValues(alpha: 0.55), borderRadius: BorderRadius.circular(20)),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: const [
                       Icon(Icons.fullscreen, color: Colors.white, size: 16),
                       SizedBox(width: 4),
-                      Text(
-                        'View',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
+                      Text('View', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500)),
                     ],
                   ),
                 ),
@@ -181,22 +121,14 @@ class _ClientRequestDetailsPageState extends State<ClientRequestDetailsPage> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                     decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.55),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
+                        color: Colors.black.withValues(alpha: 0.55), borderRadius: BorderRadius.circular(20)),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         const Icon(Icons.photo_library, color: Colors.white, size: 14),
                         const SizedBox(width: 4),
-                        Text(
-                          '${paths.length} photos',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
+                        Text('${paths.length} photos',
+                            style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600)),
                       ],
                     ),
                   ),
@@ -220,15 +152,9 @@ class _ClientRequestDetailsPageState extends State<ClientRequestDetailsPage> {
                     height: 72,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: const Color(0xFF2D7A5E),
-                        width: 2,
-                      ),
+                      border: Border.all(color: const Color(0xFF2D7A5E), width: 2),
                     ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(6),
-                      child: _buildImage(paths[index]),
-                    ),
+                    child: ClipRRect(borderRadius: BorderRadius.circular(6), child: _buildImage(paths[index])),
                   ),
                 );
               },
@@ -244,25 +170,16 @@ class _ClientRequestDetailsPageState extends State<ClientRequestDetailsPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          title: const Text(
-            'Cancel Request',
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-          content: const Text(
-            'Are you sure you want to cancel this request? This action cannot be undone.',
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          title: const Text('Cancel Request', style: TextStyle(fontWeight: FontWeight.bold)),
+          content: const Text('Are you sure you want to cancel this request? This action cannot be undone.'),
           actions: [
             OutlinedButton(
               onPressed: () => Navigator.pop(context),
               style: OutlinedButton.styleFrom(
                 foregroundColor: Colors.grey[700],
                 side: BorderSide(color: Colors.grey[400]!),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               ),
               child: const Text('No, Keep It'),
@@ -272,15 +189,9 @@ class _ClientRequestDetailsPageState extends State<ClientRequestDetailsPage> {
                 Navigator.pop(context);
                 final updated = _request.copyWith(status: 'cancelled');
                 RequestsDatabase.updateRequest(updated);
-                
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Request cancelled.'),
-                    backgroundColor: Colors.red,
-                    duration: Duration(seconds: 2),
-                  ),
+                  const SnackBar(content: Text('Request cancelled.'), backgroundColor: Colors.red, duration: Duration(seconds: 2)),
                 );
-                
                 Future.delayed(const Duration(seconds: 2), () {
                   if (mounted) Navigator.pop(context);
                 });
@@ -288,9 +199,7 @@ class _ClientRequestDetailsPageState extends State<ClientRequestDetailsPage> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red,
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(4),
-                ),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
               ),
               child: const Text('Yes, Cancel'),
             ),
@@ -313,15 +222,8 @@ class _ClientRequestDetailsPageState extends State<ClientRequestDetailsPage> {
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          'Request Details',
-          style: TextStyle(
-            color: Colors.black,
-            fontWeight: FontWeight.w600,
-            fontSize: 18,
-          ),
-        ),
-
+        title: const Text('Request Details',
+            style: TextStyle(color: Colors.black, fontWeight: FontWeight.w600, fontSize: 18)),
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -337,186 +239,88 @@ class _ClientRequestDetailsPageState extends State<ClientRequestDetailsPage> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
+                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4, offset: const Offset(0, 2))],
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      _request.title,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
-                      ),
-                    ),
+                    Text(_request.title,
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
                     const SizedBox(height: 6),
-                    Text(
-                      '${_request.timeAgo}  •  PHP ${_request.budget}',
-                      style: TextStyle(fontSize: 13, color: Colors.grey[600]),
-                    ),
+                    Text('${_request.timeAgo}  •  PHP ${_request.budget}',
+                        style: TextStyle(fontSize: 13, color: Colors.grey[600])),
                     const SizedBox(height: 12),
                     Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 14, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: priorityColor,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            _request.priority,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                          decoration: BoxDecoration(color: priorityColor, borderRadius: BorderRadius.circular(20)),
+                          child: Text(_request.priority,
+                              style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600)),
                         ),
                         const SizedBox(width: 8),
                         Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 14, vertical: 6),
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                                color: Colors.grey[400]!, width: 1.5),
+                            border: Border.all(color: Colors.grey[400]!, width: 1.5),
                           ),
-                          child: Text(
-                            _formatStatus(_request.status),
-                            style: TextStyle(
-                              color: Colors.grey[700],
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
+                          child: Text(_formatStatus(_request.status),
+                              style: TextStyle(color: Colors.grey[700], fontSize: 12, fontWeight: FontWeight.w500)),
                         ),
                       ],
                     ),
                     const SizedBox(height: 14),
-                    const Text(
-                      'Description:',
-                      style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black),
-                    ),
+                    const Text('Description:',
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black)),
                     const SizedBox(height: 4),
-                    Text(
-                      _request.description,
-                      style: TextStyle(
-                          fontSize: 14, color: Colors.grey[700], height: 1.4),
-                    ),
+                    Text(_request.description,
+                        style: TextStyle(fontSize: 14, color: Colors.grey[700], height: 1.4)),
                     const SizedBox(height: 20),
                     if (_request.status == 'pending')
-                    Row(
-                      children: [
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: () async {
-                              await Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => ClientRequestEditPage(
-                                    user: widget.user,
-                                    existingRequest: _request,
-                                  ),
-                                ),
-                              );
-                              _refreshRequest();
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF2D7A5E),
-                              foregroundColor: Colors.white,
-                              elevation: 0,
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8)),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: () async {
+                                await Navigator.push(context,
+                                  MaterialPageRoute(builder: (context) => ClientRequestEditPage(
+                                      user: widget.user, existingRequest: _request)),
+                                );
+                                _refreshRequest();
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF2D7A5E),
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              ),
+                              child: const Text('Edit', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
                             ),
-                            child: const Text('Edit',
-                                style: TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w600)),
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: _confirmCancelRequest,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.red,
-                              foregroundColor: Colors.white,
-                              elevation: 0,
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8)),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: _confirmCancelRequest,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.red,
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              ),
+                              child: const Text('Cancel Request',
+                                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
                             ),
-                            child: const Text('Cancel Request',
-                                style: TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w600)),
                           ),
-                        ),
-                      ],
-                    ),
+                        ],
+                      ),
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
-              // Offers Section Header
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 28,
-                      height: 28,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF2D7A5E),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Center(
-                        child: Text(
-                          '0', // Consider replacing with _request.offers.length
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    const Text(
-                      'Offers',
-                      style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 80),
+              const SizedBox(height: 40),
             ],
           ),
         ),
@@ -525,15 +329,11 @@ class _ClientRequestDetailsPageState extends State<ClientRequestDetailsPage> {
   }
 }
 
-// Internal Image Viewer Page remains the same as provided...
 class _ImageViewerPage extends StatefulWidget {
   final List<String> imagePaths;
   final int initialIndex;
 
-  const _ImageViewerPage({
-    required this.imagePaths,
-    required this.initialIndex,
-  });
+  const _ImageViewerPage({required this.imagePaths, required this.initialIndex});
 
   @override
   State<_ImageViewerPage> createState() => _ImageViewerPageState();
@@ -558,30 +358,16 @@ class _ImageViewerPageState extends State<_ImageViewerPage> {
 
   Widget _buildImage(String path) {
     if (kIsWeb) {
-      return Image.network(
-        path,
-        fit: BoxFit.contain,
-        errorBuilder: (_, __, ___) => const Center(
-          child: Icon(Icons.broken_image, color: Colors.white54, size: 60),
-        ),
-      );
+      return Image.network(path, fit: BoxFit.contain,
+          errorBuilder: (_, __, ___) => const Center(child: Icon(Icons.broken_image, color: Colors.white54, size: 60)));
     } else {
-      return Image.file(
-        File(path),
-        fit: BoxFit.contain,
-        errorBuilder: (_, __, ___) => const Center(
-          child: Icon(Icons.broken_image, color: Colors.white54, size: 60),
-        ),
-      );
+      return Image.file(File(path), fit: BoxFit.contain,
+          errorBuilder: (_, __, ___) => const Center(child: Icon(Icons.broken_image, color: Colors.white54, size: 60)));
     }
   }
 
   void _goTo(int index) {
-    _pageController.animateToPage(
-      index,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-    );
+    _pageController.animateToPage(index, duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
   }
 
   @override
@@ -612,28 +398,16 @@ class _ImageViewerPageState extends State<_ImageViewerPage> {
                     onPressed: () => Navigator.pop(context),
                     icon: Container(
                       padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.5),
-                        shape: BoxShape.circle,
-                      ),
+                      decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.5), shape: BoxShape.circle),
                       child: const Icon(Icons.close, color: Colors.white, size: 22),
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 6),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                     decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.5),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      '${_currentIndex + 1} / $total',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                        color: Colors.black.withValues(alpha: 0.5), borderRadius: BorderRadius.circular(20)),
+                    child: Text('${_currentIndex + 1} / $total',
+                        style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
                   ),
                   const SizedBox(width: 48),
                 ],
@@ -642,49 +416,35 @@ class _ImageViewerPageState extends State<_ImageViewerPage> {
           ),
           if (total > 1 && _currentIndex > 0)
             Positioned(
-              left: 8,
-              top: 0,
-              bottom: 0,
+              left: 8, top: 0, bottom: 0,
               child: Center(
                 child: GestureDetector(
                   onTap: () => _goTo(_currentIndex - 1),
                   child: Container(
                     padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.45),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.chevron_left,
-                        color: Colors.white, size: 30),
+                    decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.45), shape: BoxShape.circle),
+                    child: const Icon(Icons.chevron_left, color: Colors.white, size: 30),
                   ),
                 ),
               ),
             ),
           if (total > 1 && _currentIndex < total - 1)
             Positioned(
-              right: 8,
-              top: 0,
-              bottom: 0,
+              right: 8, top: 0, bottom: 0,
               child: Center(
                 child: GestureDetector(
                   onTap: () => _goTo(_currentIndex + 1),
                   child: Container(
                     padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.45),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.chevron_right,
-                        color: Colors.white, size: 30),
+                    decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.45), shape: BoxShape.circle),
+                    child: const Icon(Icons.chevron_right, color: Colors.white, size: 30),
                   ),
                 ),
               ),
             ),
           if (total > 1)
             Positioned(
-              bottom: 36,
-              left: 0,
-              right: 0,
+              bottom: 36, left: 0, right: 0,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(total, (i) {

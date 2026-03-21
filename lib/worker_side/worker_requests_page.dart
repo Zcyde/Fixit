@@ -3,18 +3,17 @@ import 'package:flutter/foundation.dart';
 import 'dart:io';
 import '../requests_data/request_model.dart';
 import '../requests_data/requests_database.dart';
+import '../requests_data/messages_database.dart';
 import '../users_data/user_model.dart';
+import '../sign_in_page.dart';
 import 'MyJobDetailsPage.dart';
+import 'worker_inbox_page.dart';
+import 'worker_profile.dart';
 
 class WorkerRequestsPage extends StatefulWidget {
   final User worker;
-  final Set<String> myJobIds;
 
-  const WorkerRequestsPage({
-    Key? key,
-    required this.worker,
-    required this.myJobIds,
-  }) : super(key: key);
+  const WorkerRequestsPage({Key? key, required this.worker}) : super(key: key);
 
   @override
   State<WorkerRequestsPage> createState() => _WorkerRequestsPageState();
@@ -23,28 +22,14 @@ class WorkerRequestsPage extends StatefulWidget {
 class _WorkerRequestsPageState extends State<WorkerRequestsPage> {
   bool _isHistoryView = false;
 
-  @override
-  void initState() {
-    super.initState();
-    // Sync DB so myJobIds is up to date
-    final allJobs = RequestsDatabase.getAllRequests();
-    for (final r in allJobs) {
-      if (r.status == 'in_progress' || r.status == 'completed') {
-        widget.myJobIds.add(r.id);
-      }
-    }
-  }
-
   List<Request> get _activeJobs => RequestsDatabase.getAllRequests()
-      .where((r) =>
-          r.status == 'in_progress' && widget.myJobIds.contains(r.id))
+      .where((r) => r.status == 'in_progress' && r.workerId == widget.worker.id)
       .toList()
     ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
   List<Request> get _completedJobs => RequestsDatabase.getAllRequests()
       .where((r) =>
-          (r.status == 'completed' || r.status == 'cancelled') &&
-          widget.myJobIds.contains(r.id))
+          (r.status == 'completed' || r.status == 'cancelled') && r.workerId == widget.worker.id)
       .toList()
     ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
@@ -59,29 +44,27 @@ class _WorkerRequestsPageState extends State<WorkerRequestsPage> {
   Color _statusColor(String status) {
     switch (status) {
       case 'in_progress': return const Color(0xFF2196F3);
-      case 'completed':   return const Color(0xFF2D7A5E);
-      case 'cancelled':   return Colors.red;
-      default:            return Colors.grey;
+      case 'completed': return const Color(0xFF2D7A5E);
+      case 'cancelled': return Colors.red;
+      default: return Colors.grey;
     }
   }
 
   String _statusLabel(String status) {
     switch (status) {
       case 'in_progress': return 'In Progress';
-      case 'completed':   return 'Completed';
-      case 'cancelled':   return 'Cancelled';
-      default:            return status;
+      case 'completed': return 'Completed';
+      case 'cancelled': return 'Cancelled';
+      default: return status;
     }
   }
 
   Widget _buildImage(String? path) {
     if (path == null || path.isEmpty) return _placeholder();
     if (kIsWeb || path.startsWith('http')) {
-      return Image.network(path, fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => _placeholder());
+      return Image.network(path, fit: BoxFit.cover, errorBuilder: (_, __, ___) => _placeholder());
     }
-    return Image.file(File(path), fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => _placeholder());
+    return Image.file(File(path), fit: BoxFit.cover, errorBuilder: (_, __, ___) => _placeholder());
   }
 
   Widget _placeholder() => Container(
@@ -103,10 +86,7 @@ class _WorkerRequestsPageState extends State<WorkerRequestsPage> {
             final result = await Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) => MyJobDetailsPage(
-                  request: request,
-                  worker: widget.worker,
-                ),
+                builder: (_) => MyJobDetailsPage(request: request, worker: widget.worker),
               ),
             );
             if (result == true) setState(() {});
@@ -121,13 +101,13 @@ class _WorkerRequestsPageState extends State<WorkerRequestsPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
-                    width: 44, height: 44,
+                    width: 44,
+                    height: 44,
                     decoration: BoxDecoration(
                       color: const Color(0xFFE8F5F1),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.construction,
-                        color: Color(0xFF2D7A5E), size: 22),
+                    child: const Icon(Icons.construction, color: Color(0xFF2D7A5E), size: 22),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -137,26 +117,21 @@ class _WorkerRequestsPageState extends State<WorkerRequestsPage> {
                         Text(request.title,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black87)),
+                            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.black87)),
                         const SizedBox(height: 2),
-                        Text(request.type,
-                            style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                        Text(request.type, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
                       ],
                     ),
                   ),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: sc.withOpacity(0.12),
+                      color: sc.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: sc.withOpacity(0.4)),
+                      border: Border.all(color: sc.withValues(alpha: 0.4)),
                     ),
                     child: Text(_statusLabel(request.status),
-                        style: TextStyle(
-                            fontSize: 11, fontWeight: FontWeight.w600, color: sc)),
+                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: sc)),
                   ),
                 ],
               ),
@@ -167,17 +142,14 @@ class _WorkerRequestsPageState extends State<WorkerRequestsPage> {
                 children: [
                   Icon(Icons.person_outline, size: 14, color: Colors.grey[500]),
                   const SizedBox(width: 4),
-                  Text(request.userName,
-                      style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                  Text(request.userName, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
                   const Spacer(),
                   Icon(Icons.attach_money, size: 14, color: Colors.grey[500]),
-                  Text('PHP ${request.budget}',
-                      style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                  Text('PHP ${request.budget}', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
                   const SizedBox(width: 12),
                   Icon(Icons.access_time, size: 13, color: Colors.grey[400]),
                   const SizedBox(width: 3),
-                  Text(_timeAgo(request.createdAt),
-                      style: TextStyle(fontSize: 11, color: Colors.grey[500])),
+                  Text(_timeAgo(request.createdAt), style: TextStyle(fontSize: 11, color: Colors.grey[500])),
                 ],
               ),
               if (request.status == 'in_progress') ...[
@@ -189,24 +161,19 @@ class _WorkerRequestsPageState extends State<WorkerRequestsPage> {
                       final result = await Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => MyJobDetailsPage(
-                            request: request,
-                            worker: widget.worker,
-                          ),
+                          builder: (_) => MyJobDetailsPage(request: request, worker: widget.worker),
                         ),
                       );
                       if (result == true) setState(() {});
                     },
                     icon: const Icon(Icons.open_in_new, size: 16),
-                    label: const Text('View Job Details',
-                        style: TextStyle(fontSize: 13)),
+                    label: const Text('View Job Details', style: TextStyle(fontSize: 13)),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF2D7A5E),
                       foregroundColor: Colors.white,
                       elevation: 0,
                       padding: const EdgeInsets.symmetric(vertical: 10),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                     ),
                   ),
                 ),
@@ -225,15 +192,12 @@ class _WorkerRequestsPageState extends State<WorkerRequestsPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              _isHistoryView ? Icons.history_outlined : Icons.work_outline,
-              size: 72, color: Colors.grey[300],
-            ),
+            Icon(_isHistoryView ? Icons.history_outlined : Icons.work_outline,
+                size: 72, color: Colors.grey[300]),
             const SizedBox(height: 16),
             Text(
               _isHistoryView ? 'No completed jobs yet' : 'No active jobs',
-              style: const TextStyle(
-                  fontSize: 16, fontWeight: FontWeight.w500, color: Colors.black54),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.black54),
             ),
             const SizedBox(height: 8),
             Text(
@@ -261,18 +225,15 @@ class _WorkerRequestsPageState extends State<WorkerRequestsPage> {
             color: active ? Colors.white : Colors.transparent,
             borderRadius: BorderRadius.circular(8),
             boxShadow: active
-                ? [BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 4, offset: const Offset(0, 1))]
+                ? [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 4, offset: const Offset(0, 1))]
                 : [],
           ),
           child: Center(
             child: Text(label,
                 style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                  color: active ? Colors.black87 : Colors.grey[600],
-                )),
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                    color: active ? Colors.black87 : Colors.grey[600])),
           ),
         ),
       ),
@@ -282,33 +243,49 @@ class _WorkerRequestsPageState extends State<WorkerRequestsPage> {
   @override
   Widget build(BuildContext context) {
     final jobs = _isHistoryView ? _completedJobs : _activeJobs;
+    final int unread = MessagesDatabase.totalUnreadFor(widget.worker.id);
+
     return Scaffold(
       backgroundColor: const Color(0xFFE8F5F1),
       appBar: AppBar(
         backgroundColor: const Color(0xFFE8F5F1),
         elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black),
+        automaticallyImplyLeading: false,
         title: const Text('Repair List',
-            style: TextStyle(
-                color: Colors.black, fontWeight: FontWeight.bold, fontSize: 17)),
+            style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 17)),
+        actions: [
+          Container(
+            margin: const EdgeInsets.only(right: 14, top: 10, bottom: 10),
+            child: ElevatedButton(
+              onPressed: () => Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (_) => const SignInPage()),
+                (route) => false,
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: Colors.red,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                  side: const BorderSide(color: Colors.red),
+                ),
+              ),
+              child: const Text('Logout', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+            ),
+          ),
+        ],
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
             margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-            decoration: BoxDecoration(
-              color: Colors.grey[200],
-              borderRadius: BorderRadius.circular(10),
-            ),
+            decoration: BoxDecoration(color: Colors.grey[200], borderRadius: BorderRadius.circular(10)),
             child: Row(
               children: [
-                _buildTab('Active', !_isHistoryView, () {
-                  setState(() => _isHistoryView = false);
-                }),
-                _buildTab('History', _isHistoryView, () {
-                  setState(() => _isHistoryView = true);
-                }),
+                _buildTab('Active', !_isHistoryView, () => setState(() => _isHistoryView = false)),
+                _buildTab('History', _isHistoryView, () => setState(() => _isHistoryView = true)),
               ],
             ),
           ),
@@ -316,10 +293,8 @@ class _WorkerRequestsPageState extends State<WorkerRequestsPage> {
           if (jobs.isNotEmpty)
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
-              child: Text(
-                '${jobs.length} job${jobs.length == 1 ? '' : 's'}',
-                style: TextStyle(fontSize: 13, color: Colors.grey[600]),
-              ),
+              child: Text('${jobs.length} job${jobs.length == 1 ? '' : 's'}',
+                  style: TextStyle(fontSize: 13, color: Colors.grey[600])),
             ),
           Expanded(
             child: jobs.isEmpty
@@ -330,6 +305,46 @@ class _WorkerRequestsPageState extends State<WorkerRequestsPage> {
                     itemBuilder: (_, i) => _buildJobCard(jobs[i]),
                   ),
           ),
+        ],
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
+        backgroundColor: const Color(0xFF2D7A5E),
+        selectedItemColor: Colors.white,
+        unselectedItemColor: Colors.white70,
+        currentIndex: 1,
+        onTap: (index) async {
+          if (index == 1) return;
+          if (index == 0) { Navigator.popUntil(context, (route) => route.isFirst); return; }
+          if (index == 2) {
+            await Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => WorkerInboxPage(worker: widget.worker)),
+            );
+            if (mounted) setState(() {});
+            return;
+          }
+          if (index == 3) {
+            await Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => WorkerProfilePage(user: widget.worker)),
+            );
+            if (mounted) setState(() {});
+          }
+        },
+        items: [
+          const BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          const BottomNavigationBarItem(icon: Icon(Icons.assignment), label: 'Requests'),
+          BottomNavigationBarItem(
+            icon: Badge(
+              label: Text('$unread'),
+              isLabelVisible: unread > 0,
+              backgroundColor: Colors.red,
+              child: const Icon(Icons.inbox),
+            ),
+            label: 'Inbox',
+          ),
+          const BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
       ),
     );

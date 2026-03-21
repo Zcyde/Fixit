@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 import '../requests_data/message_model.dart';
 import '../requests_data/messages_database.dart';
 import '../users_data/user_model.dart';
+import '../sign_in_page.dart';
 import 'chat_conversation_page.dart';
+import 'client_home_page.dart';
+import 'client_profile_page.dart';
+import 'client_requests_page.dart';
 
 class InboxPage extends StatefulWidget {
   final User user;
@@ -15,6 +19,7 @@ class InboxPage extends StatefulWidget {
 
 class _InboxPageState extends State<InboxPage> {
   List<Conversation> _conversations = [];
+  final int _selectedIndex = 2;
 
   @override
   void initState() {
@@ -24,11 +29,52 @@ class _InboxPageState extends State<InboxPage> {
 
   void _load() {
     setState(() {
-      _conversations =
-          MessagesDatabase.getConversationsForUser(widget.user.id);
+      _conversations = MessagesDatabase.getConversationsForUser(widget.user.id);
     });
   }
 
+  int get _unreadCount => MessagesDatabase.totalUnreadFor(widget.user.id);
+
+  void _logout() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Logout'),
+        content: const Text('Are you sure you want to logout?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              Navigator.pushAndRemoveUntil(context,
+                  MaterialPageRoute(builder: (_) => const SignInPage()), (route) => false);
+            },
+            child: const Text('Logout', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _onNavItemTapped(int index) async {
+    if (index == _selectedIndex) return;
+    switch (index) {
+      case 0:
+        Navigator.pushAndRemoveUntil(context,
+            MaterialPageRoute(builder: (_) => ClientHomePage(user: widget.user)),
+            (route) => false);
+        break;
+      case 1:
+        Navigator.pushReplacement(context,
+            MaterialPageRoute(builder: (_) => ClientRequestsPage(user: widget.user)));
+        break;
+      case 3:
+        await Navigator.push(context,
+            MaterialPageRoute(builder: (_) => ProfilePage(user: widget.user)));
+        if (mounted) setState(() {});
+        break;
+    }
+  }
 
   String _timeLabel(DateTime dt) {
     final diff = DateTime.now().difference(dt);
@@ -42,10 +88,7 @@ class _InboxPageState extends State<InboxPage> {
     }
     if (diff.inDays == 1) return 'Yesterday';
     if (diff.inDays < 7) return '${diff.inDays} days ago';
-    const mo = [
-      '', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-    ];
+    const mo = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     return '${mo[dt.month]} ${dt.day}';
   }
 
@@ -55,8 +98,7 @@ class _InboxPageState extends State<InboxPage> {
 
     String preview = '';
     if (last != null) {
-      final senderLabel =
-          last.senderId == widget.user.id ? 'You' : last.senderName.split(' ').first;
+      final senderLabel = last.senderId == widget.user.id ? 'You' : last.senderName.split(' ').first;
       preview = '$senderLabel: ${last.content}';
     }
 
@@ -67,30 +109,22 @@ class _InboxPageState extends State<InboxPage> {
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: Colors.grey[200]!),
         boxShadow: [
-          BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 6,
-              offset: const Offset(0, 2))
+          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 6, offset: const Offset(0, 2))
         ],
       ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-
           Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
             Expanded(
               child: Text(
                 conv.displayNameFor(widget.user.id),
-                style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black),
+                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.black),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
             if (last != null) ...[
-              Text(_timeLabel(last.timestamp),
-                  style: TextStyle(fontSize: 12, color: Colors.grey[500])),
+              Text(_timeLabel(last.timestamp), style: TextStyle(fontSize: 12, color: Colors.grey[500])),
               const SizedBox(width: 8),
             ],
             Container(
@@ -108,7 +142,6 @@ class _InboxPageState extends State<InboxPage> {
                       color: unread > 0 ? Colors.white : Colors.grey[600])),
             ),
           ]),
-
           if (conv.requestTitle != null) ...[
             const SizedBox(height: 4),
             Text(
@@ -116,7 +149,6 @@ class _InboxPageState extends State<InboxPage> {
               style: TextStyle(fontSize: 12, color: Colors.grey[500]),
             ),
           ],
-
           if (preview.isNotEmpty) ...[
             const SizedBox(height: 8),
             Text(
@@ -124,9 +156,7 @@ class _InboxPageState extends State<InboxPage> {
               style: TextStyle(
                   fontSize: 13,
                   color: Colors.grey[700],
-                  fontWeight: (unread > 0 &&
-                          last != null &&
-                          last.senderId != widget.user.id)
+                  fontWeight: (unread > 0 && last != null && last.senderId != widget.user.id)
                       ? FontWeight.w600
                       : FontWeight.normal),
               maxLines: 1,
@@ -136,27 +166,20 @@ class _InboxPageState extends State<InboxPage> {
           const SizedBox(height: 12),
           OutlinedButton(
             onPressed: () async {
-              await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => ChatConversationPage(
-                      conversation: conv, currentUser: widget.user),
-                ),
+              await Navigator.push(context,
+                MaterialPageRoute(builder: (_) => ChatConversationPage(conversation: conv, currentUser: widget.user)),
               );
               _load();
             },
             style: OutlinedButton.styleFrom(
               foregroundColor: Colors.black87,
               side: BorderSide(color: Colors.grey[350]!),
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 18, vertical: 7),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20)),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 7),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
               minimumSize: Size.zero,
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
-            child: const Text('Tap to open chat',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+            child: const Text('Tap to open chat', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
           ),
         ]),
       ),
@@ -165,45 +188,30 @@ class _InboxPageState extends State<InboxPage> {
 
   @override
   Widget build(BuildContext context) {
-    final firstName = widget.user.name.split(' ').first;
-
+    final unread = _unreadCount;
     return Scaffold(
       backgroundColor: const Color(0xFFE8F5F1),
       appBar: AppBar(
         backgroundColor: const Color(0xFFE8F5F1),
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
+        automaticallyImplyLeading: false,
         title: Row(children: [
-          const Text('Fixit',
-              style: TextStyle(
-                  color: Colors.black,
-                  fontWeight: FontWeight.w500,
-                  fontSize: 16)),
-          const SizedBox(width: 10),
+          const Text('Fixit', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w600, fontSize: 16)),
+          const SizedBox(width: 24),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(color: Colors.grey[300]!),
             ),
-            child: const Text('Inbox',
-                style: TextStyle(
-                    color: Colors.black,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14)),
+            child: const Text('Inbox', style: TextStyle(color: Colors.black, fontSize: 14, fontWeight: FontWeight.w500)),
           ),
         ]),
         actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: Center(
-              child: Text('Hello, $firstName',
-                  style: TextStyle(color: Colors.grey[700], fontSize: 14)),
-            ),
+          TextButton(
+            onPressed: _logout,
+            child: const Text('Log out', style: TextStyle(color: Colors.black, fontSize: 14)),
           ),
         ],
       ),
@@ -212,37 +220,27 @@ class _InboxPageState extends State<InboxPage> {
           padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             const Text('Messages',
-                style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black)),
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black)),
             const SizedBox(height: 4),
             Text(
               'For coordination between resident and assigned repairman (prototype chat).',
-              style: TextStyle(
-                  fontSize: 13, color: Colors.grey[600], height: 1.4),
+              style: TextStyle(fontSize: 13, color: Colors.grey[600], height: 1.4),
             ),
           ]),
         ),
-
         Expanded(
           child: _conversations.isEmpty
               ? Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.mark_chat_unread_outlined,
-                          size: 64, color: Colors.grey[350]),
+                      Icon(Icons.mark_chat_unread_outlined, size: 64, color: Colors.grey[350]),
                       const SizedBox(height: 16),
                       Text('No messages yet',
-                          style: TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.grey[500])),
+                          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: Colors.grey[500])),
                       const SizedBox(height: 6),
                       Text('Your conversations will appear here',
-                          style: TextStyle(
-                              fontSize: 13, color: Colors.grey[400])),
+                          style: TextStyle(fontSize: 13, color: Colors.grey[400])),
                     ],
                   ),
                 )
@@ -257,6 +255,34 @@ class _InboxPageState extends State<InboxPage> {
                 ),
         ),
       ]),
+      bottomNavigationBar: Container(
+        decoration: const BoxDecoration(
+          color: Color(0xFF2D7A5E),
+          boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, -2))],
+        ),
+        child: BottomNavigationBar(
+          type: BottomNavigationBarType.fixed,
+          backgroundColor: const Color(0xFF2D7A5E),
+          selectedItemColor: Colors.white,
+          unselectedItemColor: Colors.white70,
+          currentIndex: _selectedIndex,
+          onTap: _onNavItemTapped,
+          items: [
+            const BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+            const BottomNavigationBarItem(icon: Icon(Icons.assignment), label: 'Requests'),
+            BottomNavigationBarItem(
+              icon: Badge(
+                label: Text('$unread'),
+                isLabelVisible: unread > 0,
+                backgroundColor: Colors.red,
+                child: const Icon(Icons.inbox),
+              ),
+              label: 'Inbox',
+            ),
+            const BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+          ],
+        ),
+      ),
     );
   }
 }
