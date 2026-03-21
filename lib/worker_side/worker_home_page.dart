@@ -365,26 +365,23 @@ class _WorkerHomePageState extends State<WorkerHomePage> {
         title: const Text('Home Page',
             style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 17)),
         actions: [
-          Container(
-            margin: const EdgeInsets.only(right: 14, top: 10, bottom: 10),
-            child: ElevatedButton(
-              onPressed: () => Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (_) => const SignInPage()),
-                (route) => false,
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: Colors.red,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                  side: const BorderSide(color: Colors.red),
-                ),
-              ),
-              child: const Text('Logout', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+          TextButton(
+            onPressed: () => showDialog(
+              context: context,
+              builder: (ctx) => AlertDialog(
+                title: const Text('Logout'),
+                content: const Text('Are you sure you want to logout?'),
+                actions: [
+                  TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel', style: TextStyle(color: Color(0xFF2D7A5E)))),
+                  TextButton(
+                    onPressed: () { Navigator.pop(ctx); Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const SignInPage()), (route) => false); },
+                    child: const Text('Logout', style: TextStyle(color: Colors.red))
+                  )
+                ]
+              )
             ),
-          ),
+            child: const Text('Log out', style: TextStyle(color: Colors.black, fontSize: 14, fontWeight: FontWeight.w500))
+          )
         ],
       ),
       body: SingleChildScrollView(

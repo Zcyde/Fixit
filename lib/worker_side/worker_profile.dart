@@ -23,6 +23,12 @@ class _PortfolioStore {
   }
 }
 
+class _WorkerProfilePictureStore {
+  static final Map<String, XFile?> _pictures = {};
+  static XFile? get(String userId) => _pictures[userId];
+  static void set(String userId, XFile photo) => _pictures[userId] = photo;
+}
+
 class WorkerProfilePage extends StatefulWidget {
   final User user;
 
@@ -35,9 +41,21 @@ class WorkerProfilePage extends StatefulWidget {
 class _WorkerProfilePageState extends State<WorkerProfilePage> {
   final ImagePicker _picker = ImagePicker();
 
-  Future<void> _addPhoto() async {
+  Future<void> _pickProfilePicture() async {
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+    if (image != null) setState(() => _WorkerProfilePictureStore.set(widget.user.id, image));
+  }
+
+  Future<void> _addPortfolioPhoto() async {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
     if (image != null) setState(() => _PortfolioStore.add(widget.user.id, image));
+  }
+
+  ImageProvider? _getProfileImage() {
+    final pic = _WorkerProfilePictureStore.get(widget.user.id);
+    if (pic == null) return null;
+    if (kIsWeb) return NetworkImage(pic.path);
+    return FileImage(File(pic.path));
   }
 
   void _deletePhoto(int index) {
@@ -51,7 +69,7 @@ class _WorkerProfilePageState extends State<WorkerProfilePage> {
           TextButton(
             onPressed: () => Navigator.pop(context),
             style: TextButton.styleFrom(foregroundColor: Colors.grey[600]),
-            child: const Text('Cancel'),
+            child: const Text('Cancel')
           ),
           ElevatedButton(
             onPressed: () {
@@ -62,12 +80,12 @@ class _WorkerProfilePageState extends State<WorkerProfilePage> {
               backgroundColor: Colors.red,
               foregroundColor: Colors.white,
               elevation: 0,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))
             ),
-            child: const Text('Remove'),
-          ),
-        ],
-      ),
+            child: const Text('Remove')
+          )
+        ]
+      )
     );
   }
 
@@ -83,7 +101,7 @@ class _WorkerProfilePageState extends State<WorkerProfilePage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('Enter your password to edit your profile:',
-                style: TextStyle(color: Colors.grey[600], fontSize: 14)),
+              style: TextStyle(color: Colors.grey[600], fontSize: 14)),
             const SizedBox(height: 16),
             TextField(
               controller: passwordController,
@@ -96,30 +114,31 @@ class _WorkerProfilePageState extends State<WorkerProfilePage> {
                 enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: Color(0xFF2D7A5E), width: 1.5),
+                  borderSide: const BorderSide(color: Color(0xFF2D7A5E), width: 1.5)
                 ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              ),
-            ),
-          ],
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14)
+              )
+            )
+          ]
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
             style: TextButton.styleFrom(foregroundColor: Colors.grey[600]),
-            child: const Text('Cancel'),
+            child: const Text('Cancel')
           ),
           ElevatedButton(
             onPressed: () {
               if (passwordController.text.trim() == widget.user.password) {
                 Navigator.pop(dialogContext);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => _WorkerEditProfilePage(user: widget.user)),
+                Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => _WorkerEditProfilePage(user: widget.user))
                 ).then((_) => setState(() {}));
               } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Incorrect password'), backgroundColor: Colors.red));
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                  content: Text('Incorrect password'),
+                  backgroundColor: Colors.red
+                ));
               }
             },
             style: ElevatedButton.styleFrom(
@@ -127,20 +146,46 @@ class _WorkerProfilePageState extends State<WorkerProfilePage> {
               foregroundColor: Colors.white,
               elevation: 0,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))
             ),
-            child: const Text('Verify', style: TextStyle(fontWeight: FontWeight.w700)),
-          ),
-        ],
-      ),
+            child: const Text('Verify', style: TextStyle(fontWeight: FontWeight.w700))
+          )
+        ]
+      )
     );
   }
 
   void _openPhotoViewer(BuildContext context, int startIndex) {
     final photos = _PortfolioStore.get(widget.user.id);
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => _PortfolioViewer(photos: photos, initialIndex: startIndex)),
+    Navigator.push(context,
+      MaterialPageRoute(builder: (_) => _PortfolioViewer(photos: photos, initialIndex: startIndex)));
+  }
+
+  Widget _buildAvatar() {
+    final profileImage = _getProfileImage();
+    return GestureDetector(
+      onTap: _pickProfilePicture,
+      child: Stack(
+        children: [
+          CircleAvatar(
+            radius: 45,
+            backgroundColor: const Color(0xFFE8F5F1),
+            backgroundImage: profileImage,
+            child: profileImage == null
+              ? const Icon(Icons.person, size: 45, color: Color(0xFF2D7A5E))
+              : null
+          ),
+          Positioned(
+            bottom: 0,
+            right: 0,
+            child: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: const BoxDecoration(color: Color(0xFF2D7A5E), shape: BoxShape.circle),
+              child: const Icon(Icons.camera_alt, color: Colors.white, size: 14)
+            )
+          )
+        ]
+      )
     );
   }
 
@@ -151,13 +196,13 @@ class _WorkerProfilePageState extends State<WorkerProfilePage> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text('Portfolio (${_PortfolioStore.get(widget.user.id).length})',
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             TextButton.icon(
-              onPressed: _addPhoto,
+              onPressed: _addPortfolioPhoto,
               icon: const Icon(Icons.add, size: 18, color: Colors.black),
-              label: const Text('Add', style: TextStyle(color: Colors.black)),
-            ),
-          ],
+              label: const Text('Add', style: TextStyle(color: Colors.black))
+            )
+          ]
         ),
         const SizedBox(height: 12),
         if (_PortfolioStore.get(widget.user.id).isEmpty)
@@ -170,10 +215,10 @@ class _WorkerProfilePageState extends State<WorkerProfilePage> {
                 Icon(Icons.photo_library_outlined, size: 48, color: Colors.grey[400]),
                 const SizedBox(height: 10),
                 Text('No portfolio photos yet.\nTap "Add" to upload your work.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.grey[500], fontSize: 13)),
-              ],
-            ),
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.grey[500], fontSize: 13))
+              ]
+            )
           )
         else
           GridView.builder(
@@ -183,7 +228,7 @@ class _WorkerProfilePageState extends State<WorkerProfilePage> {
               crossAxisCount: 2,
               mainAxisSpacing: 10,
               crossAxisSpacing: 10,
-              childAspectRatio: 1.0,
+              childAspectRatio: 1.0
             ),
             itemCount: _PortfolioStore.get(widget.user.id).length,
             itemBuilder: (context, index) {
@@ -194,27 +239,15 @@ class _WorkerProfilePageState extends State<WorkerProfilePage> {
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(12),
                       child: kIsWeb
-                          ? Image.network(
-                              _PortfolioStore.get(widget.user.id)[index].path,
-                              width: double.infinity,
-                              height: double.infinity,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => Container(
-                                color: Colors.grey[300],
-                                child: Icon(Icons.broken_image, color: Colors.grey[500], size: 40),
-                              ),
-                            )
-                          : Image.file(
-                              File(_PortfolioStore.get(widget.user.id)[index].path),
-                              width: double.infinity,
-                              height: double.infinity,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => Container(
-                                color: Colors.grey[300],
-                                child: Icon(Icons.broken_image, color: Colors.grey[500], size: 40),
-                              ),
-                            ),
-                    ),
+                        ? Image.network(_PortfolioStore.get(widget.user.id)[index].path,
+                            width: double.infinity, height: double.infinity, fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Container(color: Colors.grey[300],
+                              child: Icon(Icons.broken_image, color: Colors.grey[500], size: 40)))
+                        : Image.file(File(_PortfolioStore.get(widget.user.id)[index].path),
+                            width: double.infinity, height: double.infinity, fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Container(color: Colors.grey[300],
+                              child: Icon(Icons.broken_image, color: Colors.grey[500], size: 40)))
+                    )
                   ),
                   Positioned(
                     top: 6,
@@ -224,15 +257,15 @@ class _WorkerProfilePageState extends State<WorkerProfilePage> {
                       child: Container(
                         padding: const EdgeInsets.all(4),
                         decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
-                        child: const Icon(Icons.close, color: Colors.white, size: 16),
-                      ),
-                    ),
-                  ),
-                ],
+                        child: const Icon(Icons.close, color: Colors.white, size: 16)
+                      )
+                    )
+                  )
+                ]
               );
-            },
-          ),
-      ],
+            }
+          )
+      ]
     );
   }
 
@@ -247,30 +280,26 @@ class _WorkerProfilePageState extends State<WorkerProfilePage> {
         backgroundColor: const Color(0xFFE8F5F1),
         elevation: 0,
         automaticallyImplyLeading: false,
-        title: const Text('Profile',
-            style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 17)),
+        title: const Text('Profile', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 17)),
         actions: [
-          Container(
-            margin: const EdgeInsets.only(right: 14, top: 10, bottom: 10),
-            child: ElevatedButton(
-              onPressed: () => Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (_) => const SignInPage()),
-                (route) => false,
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: Colors.red,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                  side: const BorderSide(color: Colors.red),
-                ),
-              ),
-              child: const Text('Logout', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+          TextButton(
+            onPressed: () => showDialog(
+              context: context,
+              builder: (ctx) => AlertDialog(
+                title: const Text('Logout'),
+                content: const Text('Are you sure you want to logout?'),
+                actions: [
+                  TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel', style: TextStyle(color: Color(0xFF2D7A5E)))),
+                  TextButton(
+                    onPressed: () { Navigator.pop(ctx); Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const SignInPage()), (route) => false); },
+                    child: const Text('Logout', style: TextStyle(color: Colors.red))
+                  )
+                ]
+              )
             ),
-          ),
-        ],
+            child: const Text('Log out', style: TextStyle(color: Colors.black, fontSize: 14, fontWeight: FontWeight.w500))
+          )
+        ]
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -283,9 +312,7 @@ class _WorkerProfilePageState extends State<WorkerProfilePage> {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4)),
-                ],
+                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4))]
               ),
               child: Column(
                 children: [
@@ -293,25 +320,21 @@ class _WorkerProfilePageState extends State<WorkerProfilePage> {
                     alignment: Alignment.topRight,
                     child: IconButton(
                       icon: const Icon(Icons.edit, color: Colors.black),
-                      onPressed: _handleEditTap,
-                    ),
+                      onPressed: _handleEditTap
+                    )
                   ),
-                  const CircleAvatar(
-                    radius: 45,
-                    backgroundColor: Color(0xFFE8F5F1),
-                    child: Icon(Icons.person, size: 45, color: Color(0xFF2D7A5E)),
-                  ),
+                  _buildAvatar(),
                   const SizedBox(height: 12),
                   Text(currentUser.name, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-                  const Text('Fixit Worker', style: TextStyle(color: Colors.grey)),
-                ],
-              ),
+                  const Text('Fixit Worker', style: TextStyle(color: Colors.grey))
+                ]
+              )
             ),
             const SizedBox(height: 24),
             _buildPortfolioSection(),
-            const SizedBox(height: 100),
-          ],
-        ),
+            const SizedBox(height: 100)
+          ]
+        )
       ),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
@@ -323,18 +346,14 @@ class _WorkerProfilePageState extends State<WorkerProfilePage> {
           if (index == 3) return;
           if (index == 0) { Navigator.popUntil(context, (route) => route.isFirst); return; }
           if (index == 1) {
-            await Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => WorkerRequestsPage(worker: widget.user)),
-            );
+            await Navigator.push(context,
+              MaterialPageRoute(builder: (_) => WorkerRequestsPage(worker: widget.user)));
             if (mounted) setState(() {});
             return;
           }
           if (index == 2) {
-            await Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => WorkerInboxPage(worker: widget.user)),
-            );
+            await Navigator.push(context,
+              MaterialPageRoute(builder: (_) => WorkerInboxPage(worker: widget.user)));
             if (mounted) setState(() {});
           }
         },
@@ -346,13 +365,13 @@ class _WorkerProfilePageState extends State<WorkerProfilePage> {
               label: Text('$unread'),
               isLabelVisible: unread > 0,
               backgroundColor: Colors.red,
-              child: const Icon(Icons.inbox),
+              child: const Icon(Icons.inbox)
             ),
-            label: 'Inbox',
+            label: 'Inbox'
           ),
-          const BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-        ],
-      ),
+          const BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile')
+        ]
+      )
     );
   }
 }
@@ -401,8 +420,10 @@ class _WorkerEditProfilePageState extends State<_WorkerEditProfilePage> {
 
     if (newPassword.isNotEmpty || confirmPassword.isNotEmpty) {
       if (newPassword != confirmPassword) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Passwords do not match'), backgroundColor: Colors.red));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Passwords do not match'),
+          backgroundColor: Colors.red
+        ));
         return;
       }
     }
@@ -411,19 +432,24 @@ class _WorkerEditProfilePageState extends State<_WorkerEditProfilePage> {
       name: _nameController.text.trim(),
       phone: _contactController.text.trim(),
       email: _emailController.text.trim(),
-      password: newPassword.isNotEmpty ? newPassword : widget.user.password,
+      password: newPassword.isNotEmpty ? newPassword : widget.user.password
     );
 
     final success = UsersDatabase.updateUser(updatedUser);
     if (success) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Profile updated!'), backgroundColor: Colors.green, duration: Duration(seconds: 1)));
+        content: Text('Profile updated!'),
+        backgroundColor: Colors.green,
+        duration: Duration(seconds: 1)
+      ));
       Future.delayed(const Duration(seconds: 1), () {
         if (mounted) Navigator.pop(context);
       });
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to update profile'), backgroundColor: Colors.red));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Failed to update profile'),
+        backgroundColor: Colors.red
+      ));
     }
   }
 
@@ -443,12 +469,12 @@ class _WorkerEditProfilePageState extends State<_WorkerEditProfilePage> {
             enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Color(0xFF2D7A5E), width: 1.5),
+              borderSide: const BorderSide(color: Color(0xFF2D7A5E), width: 1.5)
             ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          ),
-        ),
-      ],
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14)
+          )
+        )
+      ]
     );
   }
 
@@ -471,16 +497,16 @@ class _WorkerEditProfilePageState extends State<_WorkerEditProfilePage> {
             enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Color(0xFF2D7A5E), width: 1.5),
+              borderSide: const BorderSide(color: Color(0xFF2D7A5E), width: 1.5)
             ),
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             suffixIcon: IconButton(
               icon: Icon(obscure ? Icons.visibility_off : Icons.visibility, color: Colors.grey[500], size: 20),
-              onPressed: onToggle,
-            ),
-          ),
-        ),
-      ],
+              onPressed: onToggle
+            )
+          )
+        )
+      ]
     );
   }
 
@@ -493,9 +519,9 @@ class _WorkerEditProfilePageState extends State<_WorkerEditProfilePage> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black54),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => Navigator.pop(context)
         ),
-        title: const Text('Edit Profile', style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold)),
+        title: const Text('Edit Profile', style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold))
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
@@ -507,9 +533,7 @@ class _WorkerEditProfilePageState extends State<_WorkerEditProfilePage> {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4)),
-                ],
+                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4))]
               ),
               child: Column(
                 children: [
@@ -520,10 +544,10 @@ class _WorkerEditProfilePageState extends State<_WorkerEditProfilePage> {
                   _buildTextField('Email', _emailController),
                   const SizedBox(height: 16),
                   _buildPasswordField('New Password', _passwordController, _obscurePassword,
-                      () => setState(() => _obscurePassword = !_obscurePassword)),
+                    () => setState(() => _obscurePassword = !_obscurePassword)),
                   const SizedBox(height: 16),
                   _buildPasswordField('Confirm Password', _confirmPasswordController, _obscureConfirm,
-                      () => setState(() => _obscureConfirm = !_obscureConfirm)),
+                    () => setState(() => _obscureConfirm = !_obscureConfirm)),
                   const SizedBox(height: 24),
                   Row(
                     children: [
@@ -534,10 +558,10 @@ class _WorkerEditProfilePageState extends State<_WorkerEditProfilePage> {
                             foregroundColor: Colors.grey[700],
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             backgroundColor: Colors.grey[200],
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))
                           ),
-                          child: const Text('Cancel', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-                        ),
+                          child: const Text('Cancel', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700))
+                        )
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -548,20 +572,20 @@ class _WorkerEditProfilePageState extends State<_WorkerEditProfilePage> {
                             foregroundColor: Colors.white,
                             elevation: 0,
                             padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))
                           ),
-                          child: const Text('Save', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+                          child: const Text('Save', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700))
+                        )
+                      )
+                    ]
+                  )
+                ]
+              )
             ),
-            const SizedBox(height: 40),
-          ],
-        ),
-      ),
+            const SizedBox(height: 40)
+          ]
+        )
+      )
     );
   }
 }
@@ -596,10 +620,10 @@ class _PortfolioViewerState extends State<_PortfolioViewer> {
   Widget _buildPhoto(XFile photo) {
     if (kIsWeb) {
       return Image.network(photo.path, fit: BoxFit.contain,
-          errorBuilder: (_, __, ___) => const Center(child: Icon(Icons.broken_image, color: Colors.white54, size: 60)));
+        errorBuilder: (_, __, ___) => const Center(child: Icon(Icons.broken_image, color: Colors.white54, size: 60)));
     }
     return Image.file(File(photo.path), fit: BoxFit.contain,
-        errorBuilder: (_, __, ___) => const Center(child: Icon(Icons.broken_image, color: Colors.white54, size: 60)));
+      errorBuilder: (_, __, ___) => const Center(child: Icon(Icons.broken_image, color: Colors.white54, size: 60)));
   }
 
   @override
@@ -617,8 +641,8 @@ class _PortfolioViewerState extends State<_PortfolioViewer> {
               itemBuilder: (_, i) => InteractiveViewer(
                 minScale: 1.0,
                 maxScale: 4.0,
-                child: Center(child: _buildPhoto(widget.photos[i])),
-              ),
+                child: Center(child: _buildPhoto(widget.photos[i]))
+              )
             ),
             Positioned(
               top: 0, left: 0, right: 0,
@@ -631,23 +655,23 @@ class _PortfolioViewerState extends State<_PortfolioViewer> {
                       icon: Container(
                         padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.5), shape: BoxShape.circle),
-                        child: const Icon(Icons.close, color: Colors.white, size: 22),
+                        child: const Icon(Icons.close, color: Colors.white, size: 22)
                       ),
-                      onPressed: () => Navigator.pop(context),
+                      onPressed: () => Navigator.pop(context)
                     ),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                       decoration: BoxDecoration(
                         color: Colors.black.withValues(alpha: 0.5),
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(20)
                       ),
                       child: Text('${_currentIndex + 1} / $total',
-                          style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
+                        style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600))
                     ),
-                    const SizedBox(width: 48),
-                  ],
-                ),
-              ),
+                    const SizedBox(width: 48)
+                  ]
+                )
+              )
             ),
             if (total > 1 && _currentIndex > 0)
               Positioned(
@@ -655,15 +679,14 @@ class _PortfolioViewerState extends State<_PortfolioViewer> {
                 child: Center(
                   child: GestureDetector(
                     onTap: () => _pageController.previousPage(
-                        duration: const Duration(milliseconds: 250), curve: Curves.easeInOut),
+                      duration: const Duration(milliseconds: 250), curve: Curves.easeInOut),
                     child: Container(
                       padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.45), shape: BoxShape.circle),
-                      child: const Icon(Icons.chevron_left, color: Colors.white, size: 30),
-                    ),
-                  ),
-                ),
+                      decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.45), shape: BoxShape.circle),
+                      child: const Icon(Icons.chevron_left, color: Colors.white, size: 30)
+                    )
+                  )
+                )
               ),
             if (total > 1 && _currentIndex < total - 1)
               Positioned(
@@ -671,15 +694,14 @@ class _PortfolioViewerState extends State<_PortfolioViewer> {
                 child: Center(
                   child: GestureDetector(
                     onTap: () => _pageController.nextPage(
-                        duration: const Duration(milliseconds: 250), curve: Curves.easeInOut),
+                      duration: const Duration(milliseconds: 250), curve: Curves.easeInOut),
                     child: Container(
                       padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.45), shape: BoxShape.circle),
-                      child: const Icon(Icons.chevron_right, color: Colors.white, size: 30),
-                    ),
-                  ),
-                ),
+                      decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.45), shape: BoxShape.circle),
+                      child: const Icon(Icons.chevron_right, color: Colors.white, size: 30)
+                    )
+                  )
+                )
               ),
             if (total > 1)
               Positioned(
@@ -695,15 +717,15 @@ class _PortfolioViewerState extends State<_PortfolioViewer> {
                       height: 8,
                       decoration: BoxDecoration(
                         color: active ? Colors.white : Colors.white38,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
+                        borderRadius: BorderRadius.circular(4)
+                      )
                     );
-                  }),
-                ),
-              ),
-          ],
-        ),
-      ),
+                  })
+                )
+              )
+          ]
+        )
+      )
     );
   }
 }

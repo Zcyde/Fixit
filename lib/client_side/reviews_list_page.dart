@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import '../api/review_model.dart';
 import '../api/review_api_service.dart';
 
-/// Milestone 4 — Dedicated Reviews Page
-/// Displays API data using ListView.builder with Card widgets.
+// Milestone 4 — Dedicated Reviews Page
+// Displays API data using ListView.builder with Card widgets.
 class ReviewsListPage extends StatefulWidget {
   const ReviewsListPage({Key? key}) : super(key: key);
 

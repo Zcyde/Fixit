@@ -29,7 +29,7 @@ class _ClientRequestEditPageState extends State<ClientRequestEditPage> {
 
   String _selectedType = 'Plumbing';
   String _selectedPriority = 'Medium';
-  String _selectedPaymentMethod = 'Cash'; // Default payment method
+  String _selectedPaymentMethod = 'Cash';
 
   final List<XFile> _selectedImages = [];
   final ImagePicker _picker = ImagePicker();
@@ -238,7 +238,7 @@ class _ClientRequestEditPageState extends State<ClientRequestEditPage> {
           budget: _budgetController.text.trim(),
           description: _descriptionController.text.trim(),
           priority: _selectedPriority,
-          paymentMethod: _selectedPaymentMethod, // Pass updated payment method
+          paymentMethod: _selectedPaymentMethod,
           imagePaths: allPaths,
         );
 
@@ -271,7 +271,7 @@ class _ClientRequestEditPageState extends State<ClientRequestEditPage> {
           budget: _budgetController.text.trim(),
           description: _descriptionController.text.trim(),
           priority: _selectedPriority,
-          paymentMethod: _selectedPaymentMethod, // Pass selected payment method
+          paymentMethod: _selectedPaymentMethod,
           imagePaths: _selectedImages.map((img) => img.path).toList(),
           createdAt: DateTime.now(),
           userId: widget.user.id,
