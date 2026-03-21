@@ -19,7 +19,12 @@ class WorkRequestDetailsPage extends StatelessWidget {
   }) : super(key: key);
 
   void _handleAccept(BuildContext context) {
-    final updated = request.copyWith(status: 'in_progress');
+    // Store both status AND the worker's ID so it survives logout/login
+    final updated = request.copyWith(
+      status: 'in_progress',
+      workerId: worker?.id,
+      workerName: worker?.name,
+    );
     RequestsDatabase.updateRequest(updated);
     if (onAccept != null) onAccept!();
 
@@ -247,7 +252,6 @@ class WorkRequestDetailsPage extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 20),
-                      // Location Section
                       Row(
                         children: [
                           const Icon(
@@ -268,7 +272,6 @@ class WorkRequestDetailsPage extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 12),
-                      // Budget Section
                       Row(
                         children: [
                           const Icon(
@@ -288,7 +291,6 @@ class WorkRequestDetailsPage extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 12),
-                      // Payment Method Section (Newly Added)
                       Row(
                         children: [
                           const Icon(
@@ -298,7 +300,7 @@ class WorkRequestDetailsPage extends StatelessWidget {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            'Payment: ${request.paymentMethod ?? "Not specified"}',
+                            'Payment: ${request.paymentMethod}',
                             style: const TextStyle(
                               fontSize: 14,
                               color: Colors.black87,

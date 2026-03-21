@@ -8,7 +8,8 @@ class Request {
   final List<String> imagePaths;
   final DateTime createdAt;
   final String? workerName;
-  
+  final String? workerId; // <-- NEW: persists which worker accepted this job
+
   final String userId;
   final String userName;
   final String userEmail;
@@ -18,8 +19,8 @@ class Request {
   final String? userCity;
   final String? userBarangay;
   final String? userAddress;
-  final String paymentMethod; 
-  
+  final String paymentMethod;
+
   String status;
 
   Request({
@@ -43,6 +44,7 @@ class Request {
     this.userAddress,
     this.status = 'pending',
     this.workerName,
+    this.workerId, // <-- NEW
   });
 
   Request copyWith({
@@ -66,6 +68,7 @@ class Request {
     String? status,
     String? paymentMethod,
     String? workerName,
+    String? workerId, // <-- NEW
   }) {
     return Request(
       id: id ?? this.id,
@@ -88,6 +91,7 @@ class Request {
       status: status ?? this.status,
       paymentMethod: paymentMethod ?? this.paymentMethod,
       workerName: workerName ?? this.workerName,
+      workerId: workerId ?? this.workerId, // <-- NEW
     );
   }
 
