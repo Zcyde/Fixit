@@ -13,7 +13,6 @@ import 'reviews_list_page.dart';
 
 class ClientHomePage extends StatefulWidget {
   final User user;
-
   const ClientHomePage({Key? key, required this.user}) : super(key: key);
 
   @override
@@ -37,6 +36,7 @@ class _ClientHomePageState extends State<ClientHomePage> {
 
   int get _unreadCount => MessagesDatabase.totalUnreadFor(currentUser.id);
 
+  List<Review> get _combinedReviews => [...ReviewLocalStore.all, ..._reviews];
 
   Future<void> _fetchReviews() async {
     setState(() { _isLoadingReviews = true; _reviewsError = null; });
@@ -55,7 +55,6 @@ class _ClientHomePageState extends State<ClientHomePage> {
     }
   }
 
-
   void _refreshUser() {
     final u = UsersDatabase.getUserById(currentUser.id);
     if (u != null) setState(() => currentUser = u);
@@ -72,10 +71,8 @@ class _ClientHomePageState extends State<ClientHomePage> {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        title: const Text('Action Restricted',
-            style: TextStyle(fontWeight: FontWeight.bold)),
-        content: const Text(
-            'You need to complete your profile before you can create a request.'),
+        title: const Text('Action Restricted', style: TextStyle(fontWeight: FontWeight.bold)),
+        content: const Text('You need to complete your profile before you can create a request.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
@@ -90,8 +87,7 @@ class _ClientHomePageState extends State<ClientHomePage> {
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(ctx);
-              await Navigator.push(context,
-                  MaterialPageRoute(builder: (_) => ProfilePage(user: currentUser)));
+              await Navigator.push(context, MaterialPageRoute(builder: (_) => ProfilePage(user: currentUser)));
               if (mounted) _refreshUser();
             },
             style: ElevatedButton.styleFrom(
@@ -101,32 +97,25 @@ class _ClientHomePageState extends State<ClientHomePage> {
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
-            child: const Text('Complete Profile',
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(fontWeight: FontWeight.w700)),
+            child: const Text('Complete Profile', overflow: TextOverflow.ellipsis, style: TextStyle(fontWeight: FontWeight.w700)),
           ),
         ],
       ),
     );
   }
 
-
-
   void _onNavItemTapped(int index) async {
     if (index == 0) { setState(() => _selectedIndex = 0); return; }
     switch (index) {
       case 1:
-        await Navigator.push(context,
-            MaterialPageRoute(builder: (_) => ClientRequestsPage(user: currentUser)));
+        await Navigator.push(context, MaterialPageRoute(builder: (_) => ClientRequestsPage(user: currentUser)));
         break;
       case 2:
-        await Navigator.push(context,
-            MaterialPageRoute(builder: (_) => InboxPage(user: currentUser)));
-        setState(() {}); 
+        await Navigator.push(context, MaterialPageRoute(builder: (_) => InboxPage(user: currentUser)));
+        setState(() {});
         break;
       case 3:
-        await Navigator.push(context,
-            MaterialPageRoute(builder: (_) => ProfilePage(user: currentUser)));
+        await Navigator.push(context, MaterialPageRoute(builder: (_) => ProfilePage(user: currentUser)));
         if (mounted) _refreshUser();
         break;
     }
@@ -140,15 +129,11 @@ class _ClientHomePageState extends State<ClientHomePage> {
         title: const Text('Logout'),
         content: const Text('Are you sure you want to logout?'),
         actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
           TextButton(
             onPressed: () {
               Navigator.pop(ctx);
-              Navigator.pushAndRemoveUntil(context,
-                  MaterialPageRoute(builder: (_) => const SignInPage()),
-                  (route) => false);
+              Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const SignInPage()), (route) => false);
             },
             child: const Text('Logout', style: TextStyle(color: Colors.red)),
           ),
@@ -158,22 +143,146 @@ class _ClientHomePageState extends State<ClientHomePage> {
   }
 
   String _formatDate(DateTime date) {
-    const months = [
-      'January','February','March','April','May','June',
-      'July','August','September','October','November','December'
-    ];
+    const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }
 
-  int _helpfulCount(Review review) {
-    final base = review.likes + (review.id * 11) % 80;
-    return _helpfulVotes[review.id] == true ? base + 1 : base;
-  }
+int _helpfulCount(Review review) {
+  final base = review.ownerId != null ? review.likes : review.likes + (review.id * 11) % 80;
+  return _helpfulVotes[review.id] == true ? base + 1 : base;
+}
 
   void _onHelpfulVote(int reviewId, bool vote) {
-    setState(() {
-      _helpfulVotes[reviewId] = _helpfulVotes[reviewId] == vote ? null : vote;
-    });
+    setState(() => _helpfulVotes[reviewId] = _helpfulVotes[reviewId] == vote ? null : vote);
+  }
+
+  void _showReviewDialog({Review? existing}) {
+    final bodyCtrl = TextEditingController(text: existing?.body ?? '');
+    int rating = existing?.rating ?? 5;
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialog) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          title: Text(
+            existing == null ? 'Write a Review' : 'Edit Review',
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Your rating', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+              const SizedBox(height: 8),
+              Row(
+                children: List.generate(5, (i) => GestureDetector(
+                  onTap: () => setDialog(() => rating = i + 1),
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: 6),
+                    child: Icon(
+                      Icons.star_rounded,
+                      size: 34,
+                      color: i < rating ? const Color(0xFF2D7A5E) : Colors.grey[300],
+                    ),
+                  ),
+                )),
+              ),
+              const SizedBox(height: 16),
+              const Text('Your review', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+              const SizedBox(height: 8),
+              TextField(
+                controller: bodyCtrl,
+                maxLines: 4,
+                textCapitalization: TextCapitalization.sentences,
+                decoration: InputDecoration(
+                  hintText: 'Share your experience...',
+                  filled: true,
+                  fillColor: Colors.grey[100],
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: Color(0xFF2D7A5E), width: 1.5),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              style: TextButton.styleFrom(foregroundColor: Colors.grey[700]),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final text = bodyCtrl.text.trim();
+                if (text.isEmpty) return;
+                if (existing != null) {
+                  ReviewLocalStore.update(existing.copyWith(body: text, manualRating: rating));
+                } else {
+                  ReviewLocalStore.add(Review(
+                    id: DateTime.now().millisecondsSinceEpoch,
+                    name: currentUser.name,
+                    username: currentUser.email,
+                    body: text,
+                    likes: 0,
+                    ownerId: currentUser.id,
+                    manualRating: rating,
+                    manualDate: DateTime.now(),
+                  ));
+                }
+                Navigator.pop(ctx);
+                setState(() {});
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF2D7A5E),
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              child: Text(
+                existing == null ? 'Post' : 'Save',
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _confirmDelete(Review review, {VoidCallback? onDeleted}) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        title: const Text('Delete Review', style: TextStyle(fontWeight: FontWeight.bold)),
+        content: const Text('Are you sure you want to delete your review?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            style: TextButton.styleFrom(foregroundColor: Colors.grey[700]),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              ReviewLocalStore.delete(review.id);
+              Navigator.pop(ctx);
+              setState(() {});
+              onDeleted?.call();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: const Text('Delete', style: TextStyle(fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _serviceCard({
@@ -185,9 +294,7 @@ class _ClientHomePageState extends State<ClientHomePage> {
     return GestureDetector(
       onTap: () {
         if (_checkProfileAndProceed()) {
-          Navigator.push(context, MaterialPageRoute(
-              builder: (_) => ClientRequestEditPage(
-                  user: currentUser, serviceType: serviceType)));
+          Navigator.push(context, MaterialPageRoute(builder: (_) => ClientRequestEditPage(user: currentUser, serviceType: serviceType)));
         }
       },
       child: Card(
@@ -200,22 +307,13 @@ class _ClientHomePageState extends State<ClientHomePage> {
         ),
         clipBehavior: Clip.antiAlias,
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          SizedBox(
-              height: 120,
-              width: double.infinity,
-              child: Image.asset(imagePath, fit: BoxFit.cover)),
+          SizedBox(height: 120, width: double.infinity, child: Image.asset(imagePath, fit: BoxFit.cover)),
           Padding(
             padding: const EdgeInsets.all(12),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               const SizedBox(height: 4),
-              Text(subtitle,
-                  maxLines: 5,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+              Text(subtitle, maxLines: 5, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
             ]),
           ),
         ]),
@@ -224,96 +322,128 @@ class _ClientHomePageState extends State<ClientHomePage> {
   }
 
   void _showAllReviewsModal() {
-    final list = _reviews.take(20).toList();
     showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setModal) => Dialog(
-          insetPadding: const EdgeInsets.all(16),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          clipBehavior: Clip.antiAlias,
-          child: Container(
-            color: Colors.white,
-            width: double.infinity,
-            height: MediaQuery.of(context).size.height * 0.85,
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Padding(
-                padding: const EdgeInsets.only(left: 16, right: 8, top: 12, bottom: 8),
-                child: Row(children: [
-                  Container(
-                    width: 48, height: 48,
-                    decoration: BoxDecoration(
-                        color: const Color(0xFFE8F5F1),
-                        borderRadius: BorderRadius.circular(12)),
-                    child: const Icon(Icons.handyman, color: Color(0xFF2D7A5E)),
-                  ),
-                  const SizedBox(width: 16),
-                  const Expanded(
-                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text('Ratings and reviews',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500, color: Colors.black87)),
-                      Text('Fixit - Resident',
-                          style: TextStyle(fontSize: 13, color: Colors.grey)),
-                    ]),
-                  ),
-                  IconButton(
-                      icon: const Icon(Icons.close, color: Colors.black54),
-                      onPressed: () => Navigator.pop(ctx)),
-                ]),
-              ),
-              const SizedBox(height: 8),
-              const Divider(height: 1),
-              Expanded(
-                child: ListView.separated(
-                  padding: const EdgeInsets.all(20),
-                  itemCount: list.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 32),
-                  itemBuilder: (_, i) =>
-                      _reviewItem(list[i], onVoteChanged: () => setModal(() {})),
+        builder: (ctx, setModal) {
+          final list = _combinedReviews.take(20).toList();
+          return Dialog(
+            insetPadding: const EdgeInsets.all(16),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            clipBehavior: Clip.antiAlias,
+            child: Container(
+              color: Colors.white,
+              width: double.infinity,
+              height: MediaQuery.of(context).size.height * 0.85,
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Padding(
+                  padding: const EdgeInsets.only(left: 16, right: 8, top: 12, bottom: 8),
+                  child: Row(children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(color: const Color(0xFFE8F5F1), borderRadius: BorderRadius.circular(12)),
+                      child: const Icon(Icons.handyman, color: Color(0xFF2D7A5E)),
+                    ),
+                    const SizedBox(width: 16),
+                    const Expanded(
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Text('Ratings and reviews', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500, color: Colors.black87)),
+                        Text('Fixit - Resident', style: TextStyle(fontSize: 13, color: Colors.grey)),
+                      ]),
+                    ),
+                    TextButton(
+                      onPressed: () { Navigator.pop(ctx); _showReviewDialog(); },
+                      style: TextButton.styleFrom(
+                        foregroundColor: const Color(0xFF2D7A5E),
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      ),
+                      child: const Text('Write', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                    ),
+                    IconButton(icon: const Icon(Icons.close, color: Colors.black54), onPressed: () => Navigator.pop(ctx)),
+                  ]),
                 ),
-              ),
-            ]),
-          ),
-        ),
+                const SizedBox(height: 8),
+                const Divider(height: 1),
+                Expanded(
+                  child: list.isEmpty
+                    ? Center(
+                        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                          Icon(Icons.rate_review_outlined, size: 48, color: Colors.grey[300]),
+                          const SizedBox(height: 12),
+                          Text('No reviews yet', style: TextStyle(color: Colors.grey[500], fontSize: 14)),
+                        ]),
+                      )
+                    : ListView.separated(
+                        padding: const EdgeInsets.all(20),
+                        itemCount: list.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 32),
+                        itemBuilder: (_, i) {
+                          final r = list[i];
+                          final isOwn = r.ownerId == currentUser.id;
+                          return _reviewItem(
+                            r,
+                            onVoteChanged: () => setModal(() {}),
+                            onEdit: isOwn ? () { Navigator.pop(ctx); _showReviewDialog(existing: r); } : null,
+                            onDelete: isOwn ? () => _confirmDelete(r, onDeleted: () => setModal(() {})) : null,
+                          );
+                        },
+                      ),
+                ),
+              ]),
+            ),
+          );
+        },
       ),
     );
   }
 
-  Widget _reviewItem(Review review, {VoidCallback? onVoteChanged}) {
+  Widget _reviewItem(Review review, {VoidCallback? onVoteChanged, VoidCallback? onEdit, VoidCallback? onDelete}) {
+    final isOwn = review.ownerId == currentUser.id;
     final vote = _helpfulVotes[review.id];
     final count = _helpfulCount(review);
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Row(children: [
         CircleAvatar(
-          backgroundColor: const Color(0xFF607D8B),
+          backgroundColor: isOwn ? const Color(0xFF2D7A5E) : const Color(0xFF607D8B),
           radius: 16,
-          child: Text(review.name.isNotEmpty ? review.name[0].toUpperCase() : '?',
-              style: const TextStyle(color: Colors.white, fontSize: 14)),
+          child: Text(
+            review.name.isNotEmpty ? review.name[0].toUpperCase() : '?',
+            style: const TextStyle(color: Colors.white, fontSize: 14),
+          ),
         ),
         const SizedBox(width: 12),
-        Expanded(child: Text(review.name,
-            style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14, color: Colors.black87))),
-        const Icon(Icons.more_vert, size: 20, color: Colors.black54),
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(review.name, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14, color: Colors.black87)),
+            if (isOwn) const Text('Your review', style: TextStyle(fontSize: 11, color: Color(0xFF2D7A5E), fontWeight: FontWeight.w500)),
+          ]),
+        ),
+        if (isOwn) Row(mainAxisSize: MainAxisSize.min, children: [
+          GestureDetector(
+            onTap: onEdit,
+            child: Icon(Icons.edit_outlined, size: 18, color: Colors.grey[600]),
+          ),
+          const SizedBox(width: 10),
+          GestureDetector(
+            onTap: onDelete,
+            child: Icon(Icons.delete_outline, size: 18, color: Colors.red[400]),
+          ),
+        ]) else const Icon(Icons.more_vert, size: 20, color: Colors.black54),
       ]),
       const SizedBox(height: 12),
       Row(children: [
-        Row(children: List.generate(5, (i) => Icon(Icons.star,
-            size: 14,
-            color: i < review.rating ? const Color(0xFF01875F) : Colors.grey[300]))),
+        Row(children: List.generate(5, (i) => Icon(Icons.star, size: 14, color: i < review.rating ? const Color(0xFF01875F) : Colors.grey[300]))),
         const SizedBox(width: 8),
-        Text(_formatDate(review.reviewDate),
-            style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+        Text(_formatDate(review.reviewDate), style: TextStyle(color: Colors.grey[600], fontSize: 12)),
       ]),
       const SizedBox(height: 12),
-      Text(review.body,
-          style: const TextStyle(fontSize: 14, color: Colors.black87, height: 1.4)),
+      Text(review.body, style: const TextStyle(fontSize: 14, color: Colors.black87, height: 1.4)),
       const SizedBox(height: 16),
-      Text('$count people found this review helpful',
-          style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+      Text('$count people found this review helpful', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
       const SizedBox(height: 8),
       Row(children: [
-        Text('Did you find this helpful?',
-            style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+        Text('Did you find this helpful?', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
         const SizedBox(width: 12),
         OutlinedButton(
           onPressed: () { _onHelpfulVote(review.id, true); onVoteChanged?.call(); },
@@ -324,11 +454,7 @@ class _ClientHomePageState extends State<ClientHomePage> {
             backgroundColor: vote == true ? const Color(0xFFE8F5F1) : Colors.transparent,
             side: BorderSide(color: vote == true ? const Color(0xFF2D7A5E) : Colors.grey[300]!),
           ),
-          child: Text('Yes',
-              style: TextStyle(
-                  color: vote == true ? const Color(0xFF2D7A5E) : Colors.black87,
-                  fontSize: 12,
-                  fontWeight: vote == true ? FontWeight.bold : FontWeight.normal)),
+          child: Text('Yes', style: TextStyle(color: vote == true ? const Color(0xFF2D7A5E) : Colors.black87, fontSize: 12, fontWeight: vote == true ? FontWeight.bold : FontWeight.normal)),
         ),
         const SizedBox(width: 8),
         OutlinedButton(
@@ -340,17 +466,15 @@ class _ClientHomePageState extends State<ClientHomePage> {
             backgroundColor: vote == false ? Colors.red[50] : Colors.transparent,
             side: BorderSide(color: vote == false ? Colors.red[300]! : Colors.grey[300]!),
           ),
-          child: Text('No',
-              style: TextStyle(
-                  color: vote == false ? Colors.red[400] : Colors.black87,
-                  fontSize: 12,
-                  fontWeight: vote == false ? FontWeight.bold : FontWeight.normal)),
+          child: Text('No', style: TextStyle(color: vote == false ? Colors.red[400] : Colors.black87, fontSize: 12, fontWeight: vote == false ? FontWeight.bold : FontWeight.normal)),
         ),
       ]),
     ]);
   }
 
   Widget _reviewsSection() {
+    final combined = _combinedReviews;
+    final firstReview = combined.isNotEmpty ? combined.first : null;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: const BoxDecoration(
@@ -359,20 +483,34 @@ class _ClientHomePageState extends State<ClientHomePage> {
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          const Text('Ratings and reviews',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-          IconButton(
+          const Text('Ratings and reviews', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          Row(children: [
+            TextButton(
+              onPressed: () => _showReviewDialog(),
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFF2D7A5E),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              ),
+              child: const Text('Write Review', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+            ),
+            IconButton(
               icon: const Icon(Icons.arrow_forward),
-              onPressed: () => Navigator.push(context,
-                  MaterialPageRoute(builder: (_) => const ReviewsListPage()))),
+              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ReviewsListPage(currentUser: currentUser))),
+            ),
+          ]),
         ]),
         const SizedBox(height: 16),
-        if (_isLoadingReviews)
+        if (firstReview != null)
+          _reviewItem(
+            firstReview,
+            onEdit: firstReview.ownerId == currentUser.id ? () => _showReviewDialog(existing: firstReview) : null,
+            onDelete: firstReview.ownerId == currentUser.id ? () => _confirmDelete(firstReview) : null,
+          )
+        else if (_isLoadingReviews)
           const Center(
             child: Padding(
               padding: EdgeInsets.all(24.0),
-              child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF01875F))),
+              child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF01875F))),
             ),
           )
         else if (_reviewsError != null)
@@ -387,18 +525,20 @@ class _ClientHomePageState extends State<ClientHomePage> {
             child: Row(children: [
               Icon(Icons.error_outline, color: Colors.red[700]),
               const SizedBox(width: 12),
-              Expanded(child: Text('Failed to load reviews. Please retry.',
-                  style: TextStyle(color: Colors.red[700]))),
+              Expanded(child: Text('Failed to load reviews. Please retry.', style: TextStyle(color: Colors.red[700]))),
               TextButton(onPressed: _fetchReviews, child: const Text('Retry')),
             ]),
           )
-        else if (_reviews.isNotEmpty)
-          _reviewItem(_reviews.first)
         else
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 24.0),
-            child: Center(child: Text('No reviews available',
-                style: TextStyle(color: Colors.grey))),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 24.0),
+            child: Center(
+              child: Column(children: [
+                Icon(Icons.rate_review_outlined, size: 40, color: Colors.grey[350]),
+                const SizedBox(height: 8),
+                Text('No reviews yet. Be the first!', style: TextStyle(color: Colors.grey[500], fontSize: 13)),
+              ]),
+            ),
           ),
       ]),
     );
@@ -413,8 +553,7 @@ class _ClientHomePageState extends State<ClientHomePage> {
         backgroundColor: const Color(0xFFE8F5F1),
         elevation: 0,
         title: Row(children: [
-          const Text('Fixit',
-              style: TextStyle(color: Colors.black, fontWeight: FontWeight.w600, fontSize: 16)),
+          const Text('Fixit', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w600, fontSize: 16)),
           const SizedBox(width: 24),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -423,35 +562,27 @@ class _ClientHomePageState extends State<ClientHomePage> {
               borderRadius: BorderRadius.circular(20),
               border: Border.all(color: Colors.grey[300]!),
             ),
-            child: const Text('Resident',
-                style: TextStyle(color: Colors.black, fontSize: 14, fontWeight: FontWeight.w500)),
+            child: const Text('Resident', style: TextStyle(color: Colors.black, fontSize: 14, fontWeight: FontWeight.w500)),
           ),
         ]),
         actions: [
-          TextButton(
-              onPressed: _logout,
-              child: const Text('Log out',
-                  style: TextStyle(color: Colors.black, fontSize: 14))),
+          TextButton(onPressed: _logout, child: const Text('Log out', style: TextStyle(color: Colors.black, fontSize: 14))),
         ],
       ),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(20.0),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            const Text('Get help from talented people\nin your area',
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, height: 1.2)),
+            const Text('Get help from talented people\nin your area', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, height: 1.2)),
             const SizedBox(height: 12),
-            Text('Report repair problems fast and track updates in one place.',
-                style: TextStyle(fontSize: 14, color: Colors.grey[700])),
+            Text('Report repair problems fast and track updates in one place.', style: TextStyle(fontSize: 14, color: Colors.grey[700])),
             const SizedBox(height: 24),
-
             Row(children: [
               Expanded(
                 child: ElevatedButton(
                   onPressed: () {
                     if (_checkProfileAndProceed()) {
-                      Navigator.push(context, MaterialPageRoute(
-                          builder: (_) => ClientRequestEditPage(user: currentUser)));
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => ClientRequestEditPage(user: currentUser)));
                     }
                   },
                   style: ElevatedButton.styleFrom(
@@ -460,15 +591,13 @@ class _ClientHomePageState extends State<ClientHomePage> {
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
-                  child: const Text('Create Request',
-                      style: TextStyle(fontWeight: FontWeight.w600)),
+                  child: const Text('Create Request', style: TextStyle(fontWeight: FontWeight.w600)),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: OutlinedButton(
-                  onPressed: () => Navigator.push(context,
-                      MaterialPageRoute(builder: (_) => ClientRequestsPage(user: currentUser))),
+                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ClientRequestsPage(user: currentUser))),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.black,
                     backgroundColor: Colors.white,
@@ -476,17 +605,13 @@ class _ClientHomePageState extends State<ClientHomePage> {
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
-                  child: const Text('My Requests',
-                      style: TextStyle(fontWeight: FontWeight.w600)),
+                  child: const Text('My Requests', style: TextStyle(fontWeight: FontWeight.w600)),
                 ),
               ),
             ]),
-
             const SizedBox(height: 32),
-            const Text('Popular Services',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text('Popular Services', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
-
             GridView.count(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -505,7 +630,6 @@ class _ClientHomePageState extends State<ClientHomePage> {
                 _serviceCard(title: 'Roof Repair', subtitle: 'Fix leaks and install roofing.', imagePath: 'assets/roofrepair.jpg', serviceType: 'Roofing'),
               ],
             ),
-
             const SizedBox(height: 32),
             _reviewsSection(),
             const SizedBox(height: 24),
