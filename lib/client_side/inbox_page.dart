@@ -199,7 +199,7 @@ class _InboxPageState extends State<InboxPage> {
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             const Text('Messages', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black)),
             const SizedBox(height: 4),
-            Text('For coordination between resident and assigned repairman (prototype chat).',
+            Text('For coordination between resident and assigned repairman.',
               style: TextStyle(fontSize: 13, color: Colors.grey[600], height: 1.4))
           ])
         ),
